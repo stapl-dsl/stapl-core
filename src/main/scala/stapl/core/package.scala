@@ -1,6 +1,7 @@
 package stapl
 
 import scala.language.implicitConversions
+import stapl.core.SimpleAttribute
 
 package object core {
   
@@ -63,4 +64,15 @@ package object core {
 	  effect = Deny,
 	  condition = AlwaysTrue
 	)
+	
+	
+  val action = new AttributeContainer(ACTION)
+  action.id = SimpleAttribute(String) 
+  val subject = new AttributeContainer(SUBJECT)
+  subject.id = SimpleAttribute(String) 
+  val resource = new AttributeContainer(RESOURCE)
+  resource.id = SimpleAttribute(String)
+  val environment = new AttributeContainer(ENVIRONMENT)
+  
+  val ID_NAME = "id";
 }

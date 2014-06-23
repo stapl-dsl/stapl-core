@@ -91,13 +91,13 @@ object Example extends App {
     override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue] = {
       cType match {
         case SUBJECT => name match {
-          case "roles" => ctx.subjectID match {
+          case "roles" => ctx.subjectId match {
             case "Jasper" => Some(List("student"))
             case "Sara" => Some(List("student"))
             case "Paul" => Some(List("teacher"))
             case _ => None
           }
-          case "birthday" => ctx.subjectID match {
+          case "birthday" => ctx.subjectId match {
             case "Jasper" => Some(Day(1990, 2, 21))
             case "Sara" => Some(Day(1999, 3, 14))
             case "Paul" => Some(Day(1956, 7, 16))
@@ -106,7 +106,7 @@ object Example extends App {
           case _ => None
         }
         case RESOURCE => name match {
-          case "category" => ctx.resourceID match {
+          case "category" => ctx.resourceId match {
             case "The Catcher in the Rye" => Some("book")
             case "Worst Case Scenario" => Some("cd")
             case _ => None

@@ -2,12 +2,12 @@ package stapl.core.examples
 
 import stapl.core._
 
-object BigPolicy extends App {
+object EhealthPolicy {
   
-  val action = new AttributeContainer(ACTION)
-  val subject = new AttributeContainer(SUBJECT)
-  val resource = new AttributeContainer(RESOURCE)
-  val env = new AttributeContainer(ENVIRONMENT)
+  val subject = stapl.core.subject
+  val resource = stapl.core.resource
+  val action = stapl.core.action
+  val env = stapl.core.environment
   
   env.currentDateTime                     = SimpleAttribute(DateTime)
   resource.type_                          = SimpleAttribute(String)
@@ -37,124 +37,147 @@ object BigPolicy extends App {
   subject.allowed_to_access_pms           = SimpleAttribute(Bool)
   subject.responsible_patients            = ListAttribute(String)
   
-  
-  val policyTree = 
-    
-  new PolicySet("jisa13-final3")( // The policy set for "view patient status".
+  // The policy set for "view patient status".
+  val policy = new PolicySet("jisa13-final3")( 
       target = action.id === "view" & resource.type_ === "patientstatus",
-      new Policy("policy:1")( // The consent policy.
+      // The consent policy.
+      new Policy("policy:1")( 
           target = "medical_personnel" in subject.roles,
           effect = Deny,
           condition = !subject.triggered_breaking_glass & (subject.id in resource.owner_withdrawn_consents)
       ),
-      new Policy("policy:2")( // Only physicians, nurses and patients can access the monitoring system.
+      // Only physicians, nurses and patients can access the monitoring system.
+      new Policy("policy:2")( 
           effect = Deny,
           condition = !(("nurse" in subject.roles)  | ("physician" in subject.roles) | ("patient" in subject.roles))
       ),
-      new PolicySet("policyset:2")( // For physicians.
+      // For physicians.
+      new PolicySet("policyset:2")( 
           target = "physician" in subject.roles,
-          new Policy("policy:3")( // Of the physicians, only gps, physicians of the cardiology department, physicians of the elder care department and physicians of the emergency department can access the monitoring system.
+          // Of the physicians, only gps, physicians of the cardiology department, physicians of the elder care department and physicians of the emergency department can access the monitoring system.
+          new Policy("policy:3")( 
               effect = Deny,
               condition = !((subject.department === "cardiology")  | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles))
           ),
-          new Policy("policy:4")( // All of the previous physicians can access the monitoring system in case of emergency.
+          // All of the previous physicians can access the monitoring system in case of emergency.
+          new Policy("policy:4")( 
               target = (subject.department === "cardiology")  | (subject.department === "elder_care") | (subject.department === "emergency"),
               effect = Permit,
               condition = subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency
           ),
-          new PolicySet("policyset:3")( // For GPs.
+          // For GPs.
+          new PolicySet("policyset:3")( 
               target = "gp" in subject.roles,
-              new Policy("policy:5")( // Permit if in consultation or treated in the last six months or primary physician or responsible in the system.
+              new Policy("policy:5")( 
+                  // Permit if in consultation or treated in the last six months or primary physician or responsible in the system.
                   effect = Permit,
                   condition = (resource.owner_id === subject.current_patient_in_consultation) | (resource.owner_id in subject.treated_in_last_six_months) | (resource.owner_id in subject.primary_patients) | (subject.id in resource.owner_responsible_physicians)
               ),
               defaultDeny("policy:6")
           ) with PermitOverrides,
-          new PolicySet("policyset:4")( // For cardiologists.
+          // For cardiologists.
+          new PolicySet("policyset:4")( 
               target = subject.department === "cardiology",
-              new Policy("policy:7")( // Permit for head physician.
+              // Permit for head physician.
+              new Policy("policy:7")( 
                   target = subject.is_head_physician,
                   effect = Permit
               ),
-              new Policy("policy:8")( // Permit if treated the patient or treated in team.
+              // Permit if treated the patient or treated in team.
+              new Policy("policy:8")( 
                   effect = Permit,
                   condition = (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team)
               ),
               defaultDeny("policy:9")
           ) with PermitOverrides,
-          new PolicySet("policyset:5")( // For physicians of elder care department
+          // For physicians of elder care department
+          new PolicySet("policyset:5")( 
               target = subject.department === "elder_care",
-              new Policy("policy:10")( // Permit if admitted in care unit or treated in the last six months.
+              // Permit if admitted in care unit or treated in the last six months.
+              new Policy("policy:10")(
                   effect = Permit,
                   condition = (resource.owner_id in subject.admitted_patients_in_care_unit) | (resource.owner_id in subject.treated_in_last_six_months)
               ),
               defaultDeny("policy:11")
           ) with PermitOverrides,
-          new PolicySet("policyset:6")( // For physicians of emergency department
+          // For physicians of emergency department
+          new PolicySet("policyset:6")( 
               target = subject.department === "emergency",
-              new Policy("policy:12")( // Permit if patient status is bad (or the above).
+              // Permit if patient status is bad (or the above).
+              new Policy("policy:12")( 
                   effect = Permit,
                   condition = resource.patient_status === "bad"
               ),
               defaultDeny("policy:13")
           ) with PermitOverrides
       ) with FirstApplicable,
-      new PolicySet("policyset:7")( // For nurses.
+      // For nurses.
+      new PolicySet("policyset:7")( 
           target = "nurse" in subject.roles,
-          new Policy("policy:14")( // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
+          // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
+          new Policy("policy:14")( 
               effect = Deny,
               condition = !((subject.department === "cardiology") | (subject.department === "elder_care"))
           ),
-          new Policy("policy:15")( // Nurses can only access the PMS during their shifts.
+          // Nurses can only access the PMS during their shifts.
+          new Policy("policy:15")( 
               effect = Deny,
               condition = !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop))
           ),
-          new Policy("policy:16")( // Nurses can only access the PMS from the hospital.
+          // Nurses can only access the PMS from the hospital.
+          new Policy("policy:16")( 
               effect = Deny,
               condition = !(subject.location === "hospital")
           ),
-          new Policy("policy:17")( // Nurses can only view the patient's status of the last five days.
+          // Nurses can only view the patient's status of the last five days.
+          new Policy("policy:17")( 
               effect = Deny,
               condition = !(env.currentDateTime lteq (resource.created + 5.days))
           ),
-          new PolicySet("policyset:8")( // For nurses of emergency department.
+          // For nurses of cardiology department.
+          new PolicySet("policyset:8")( 
               target = subject.department === "cardiology",
-              new Policy("policy:18")( // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
+              // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
+              new Policy("policy:18")( 
                   target = subject.department === "cardiology",
                   effect = Permit,
                   condition = (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
               ),
               defaultDeny("policy:19")
           ) with PermitOverrides,
-          new PolicySet("policyset:9")( // For nurses of elder care department.
+          // For nurses of the elder care department.
+          new PolicySet("policyset:9")( 
               target = subject.department === "elder_care",
-              new Policy("policy:20")( // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
+              // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
+              new Policy("policy:20")( 
                   effect = Deny,
                   condition = !subject.allowed_to_access_pms
               ),
-              new PolicySet("policySet:10")( // Nurses of the elder care department can only view the patient status of a patient who is currently admitted to their nurse unit and for whome they are assigned responsible.
+              // Nurses of the elder care department can only view the patient status of a patient who is currently admitted to their nurse unit and for whome they are assigned responsible.
+              new PolicySet("policySet:10")( 
                   target = true,
-                  new Policy("policy:21")( // Nurses of the elder care department can only view the patient status of a patient who is currently admitted to their nurse unit and for whome they are assigned responsible.
+                  new Policy("policy:21")( 
                       effect = Permit,
                       condition = (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (resource.owner_id in subject.responsible_patients)
                   ),
                   defaultDeny("policy:22")
-              ) with PermitOverrides
+              ) with PermitOverrides // TODO make this a pattern onlyPermitIf
           ) with DenyOverrides
       ) with FirstApplicable,
-      new PolicySet("policyset:11")( // For patients
+      // For patients
+      new PolicySet("policyset:11")( 
           target = "patient" in subject.roles,
-          new Policy("policy:23")( // A patient can only access the PMS if (still) allowed by the hospital (e.g., has subscribed to the PMS, but is not paying any more).
+          // A patient can only access the PMS if (still) allowed by the hospital (e.g., has subscribed to the PMS, but is not paying any more).
+          new Policy("policy:23")( 
               effect = Deny,
               condition = !subject.allowed_to_access_pms
           ),
-          new Policy("policy:24")( // A patient can only view his own status.
+          // A patient can only view his own status.
+          new Policy("policy:24")( 
               effect = Deny,
               condition = !(resource.owner_id === subject.id)
           ),
           defaultPermit("policy:25")
       ) with FirstApplicable
   ) with DenyOverrides
-  
-  println(policyTree)
 }
