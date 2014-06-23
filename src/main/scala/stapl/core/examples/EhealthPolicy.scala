@@ -1,10 +1,11 @@
 package stapl.core.examples
 
 import stapl.core._
+import stapl.core.templates._
 
 object EhealthPolicy {
   
-  val subject = stapl.core.subject
+  val subject = stapl.core.subject // FIXME do we work on the single subject object here? we need a local copy of some sort
   val resource = stapl.core.resource
   val action = stapl.core.action
   val env = stapl.core.environment

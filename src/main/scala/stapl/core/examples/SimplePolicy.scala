@@ -1,6 +1,7 @@
 package stapl.core.examples
 
 import stapl.core._
+import stapl.core.templates._
 
 object Example extends App {
 
