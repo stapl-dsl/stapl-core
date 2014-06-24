@@ -35,7 +35,7 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
   val subPolicies: List[AbstractPolicy] = List(_subPolicies:_*)
   
   require(!subPolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
-  require(uniqueIds, "All policies require a unique ID")
+  //require(uniqueIds, "All policies require a unique ID")
   
   private def uniqueIds(): Boolean = {
     val ids = allIds

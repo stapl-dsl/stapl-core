@@ -55,12 +55,13 @@ object EhealthPolicy {
       Policy("policy:4") := when ((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
         permit iff (subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency),
       
-      // For GPs.
-      PolicySet("policyset:3") := when ("gp" in subject.roles) apply PermitOverrides to (        
-        // Permit if in consultation or treated in the last six months or primary physician or responsible in the system.
-        Policy("policy:5") := permit iff ((resource.owner_id === subject.current_patient_in_consultation) | (resource.owner_id in subject.treated_in_last_six_months) | (resource.owner_id in subject.primary_patients) | (subject.id in resource.owner_responsible_physicians)),
-        
-        Policy("policy:6") := deny
+      // For GPs: only permit if in consultation or treated in the last six months or primary physician or responsible in the system.
+      OnlyPermitIff("policyset:3")(
+          target = "gp" in subject.roles,
+          (resource.owner_id === subject.current_patient_in_consultation)
+          | (resource.owner_id in subject.treated_in_last_six_months)
+          | (resource.owner_id in subject.primary_patients)
+          | (subject.id in resource.owner_responsible_physicians)
       ),
       // For cardiologists.
       PolicySet("policyset:4") := when (subject.department === "cardiology") apply PermitOverrides to (        
@@ -72,17 +73,16 @@ object EhealthPolicy {
         
         Policy("policy:9") := deny
       ),
-      // For physicians of elder care department
-      PolicySet("policyset:5") := when (subject.department === "elder_care") apply PermitOverrides to (        
-        // Permit if admitted in care unit or treated in the last six months.
-        Policy("policy:10") := permit iff (resource.owner_id in subject.admitted_patients_in_care_unit) | (resource.owner_id in subject.treated_in_last_six_months),
-
-        defaultDeny("policy:11")),
-      // For physicians of emergency department
-      PolicySet("policyset:6") := when (subject.department === "emergency") apply PermitOverrides to (        
-        // Permit if patient status is bad (or the above).
-        Policy("policy:12") := permit iff resource.patient_status === "bad",
-        Policy("policy:13") := deny
+      // For physicians of elder care department: only permit if admitted in care unit or treated in the last six months.
+      OnlyPermitIff("policyset:5")(
+          target = subject.department === "elder_care",
+          (resource.owner_id in subject.admitted_patients_in_care_unit)
+          | (resource.owner_id in subject.treated_in_last_six_months)
+      ),
+      // For physicians of emergency department: only permit if patient status is bad (or the above).
+      OnlyPermitIff("policyset:6")(
+          target = subject.department === "emergency",   
+          resource.patient_status === "bad"
       )
     ),
     // For nurses.
@@ -100,11 +100,12 @@ object EhealthPolicy {
       Policy("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
       
       // For nurses of cardiology department.
+      // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
       // TODO make this into a reusable pattern
-      PolicySet("policyset:8") := when (subject.department === "cardiology") apply PermitOverrides to (        
-        // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
-        Policy("policy:18") := when (subject.department === "cardiology") permit iff (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days))),
-        Policy("policy:19") := deny
+      OnlyPermitIff("policyset:8")(
+          target = subject.department === "cardiology",
+          (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
+          	& (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
       ),
         
       // For nurses of the elder care department.
@@ -113,10 +114,10 @@ object EhealthPolicy {
         Policy("policy:20") := deny iff !subject.allowed_to_access_pms,
         
         // Nurses of the elder care department can only view the patient status of a patient who is currently admitted to their nurse unit and for whome they are assigned responsible.
-        // TODO make this a pattern onlyPermitIf
-        PolicySet("policySet:10") := apply PermitOverrides to (       
-          Policy("policy:21") := permit iff (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (resource.owner_id in subject.responsible_patients),
-          Policy("policy:22") := deny
+        OnlyPermitIff("policySet:10")(
+            target = AlwaysTrue,
+            (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
+            	& (resource.owner_id in subject.responsible_patients)
         )
       )
     ),

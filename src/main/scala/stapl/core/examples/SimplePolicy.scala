@@ -77,14 +77,10 @@ object Example extends App {
         effect = Permit
     )
   
-  val policy = 
-    
-  new PolicySet("policyset1")(
-      target = action.id === "access" & resource.category === "book",
-      pca = FirstApplicable,
+  val policy = PolicySet("policyset1") := when (action.id === "access" & resource.category === "book") apply FirstApplicable to (
       alwaysPermitRole("policy1", "teacher"),
       studentPolicy,
-      defaultDeny("policy3")
+      Policy("policy3") := deny
   )
   
   
