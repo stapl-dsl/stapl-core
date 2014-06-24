@@ -81,10 +81,11 @@ object Example extends App {
     
   new PolicySet("policyset1")(
       target = action.id === "access" & resource.category === "book",
+      pca = FirstApplicable,
       alwaysPermitRole("policy1", "teacher"),
       studentPolicy,
       defaultDeny("policy3")
-  ) with FirstApplicable
+  )
   
   
   class MyModule extends AttributeFinderModule {

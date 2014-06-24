@@ -25,9 +25,7 @@ class Policy(id: String)(target: Expression=AlwaysTrue, effect: Effect, conditio
   override def toString = id
 }
 
-class PolicySet(id: String)(target: Expression, _subPolicies: AbstractPolicy*) extends AbstractPolicy(id) {
-  algo: CombinationAlgorithm =>
-  
+class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, _subPolicies: AbstractPolicy*) extends AbstractPolicy(id) {  
   val subPolicies: List[AbstractPolicy] = List(_subPolicies:_*)
   
   require(!subPolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
@@ -41,7 +39,7 @@ class PolicySet(id: String)(target: Expression, _subPolicies: AbstractPolicy*) e
   
   override def evaluate(ctx: EvaluationCtx) = 
     if (isApplicable(ctx))
-      algo.combine(ctx)
+      pca.combine(subPolicies, ctx)
     else
       NotApplicable
   

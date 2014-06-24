@@ -3,17 +3,15 @@ package stapl.core
 import scala.annotation.tailrec
 
 trait CombinationAlgorithm {
-  policySet: PolicySet =>
   
-  def combine(ctx: EvaluationCtx): Result
+  def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result
 }
 
-trait PermitOverrides extends CombinationAlgorithm {
-  policySet: PolicySet =>
+object PermitOverrides extends CombinationAlgorithm {
   
-  override def combine(ctx: EvaluationCtx): Result = {
+  override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
     @tailrec
-    def combine(policies: List[AbstractPolicy], tempResult: Result): Result = policies match {
+    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
         case Permit => Permit
         case Deny => combine(rest, Deny)
@@ -22,16 +20,15 @@ trait PermitOverrides extends CombinationAlgorithm {
       case Nil => tempResult
     }
     
-    combine(policySet.subPolicies, NotApplicable)
+    combine(policies, NotApplicable)
   }
 }
 
-trait DenyOverrides extends CombinationAlgorithm {
-  policySet: PolicySet =>
+object DenyOverrides extends CombinationAlgorithm {
   
-  override def combine(ctx: EvaluationCtx): Result = {
+  override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
     @tailrec
-    def combine(policies: List[AbstractPolicy], tempResult: Result): Result = policies match {
+    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
         case Deny => Deny
         case Permit => combine(rest, Permit)
@@ -40,16 +37,15 @@ trait DenyOverrides extends CombinationAlgorithm {
       case Nil => tempResult
     }
     
-    combine(policySet.subPolicies, NotApplicable)
+    combine(policies, NotApplicable)
   }
 }
 
-trait FirstApplicable extends CombinationAlgorithm {
-  policySet: PolicySet =>
+object FirstApplicable extends CombinationAlgorithm {
   
-  override def combine(ctx: EvaluationCtx): Result = {
+  override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
     @tailrec
-    def combine(policies: List[AbstractPolicy], tempResult: Result): Result = policies match {
+    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
         case result@(Permit | Deny) => result
         case NotApplicable => combine(rest, NotApplicable)
@@ -57,6 +53,6 @@ trait FirstApplicable extends CombinationAlgorithm {
       case Nil => tempResult
     }
     
-    combine(policySet.subPolicies, NotApplicable)
+    combine(policies, NotApplicable)
   }
 }
