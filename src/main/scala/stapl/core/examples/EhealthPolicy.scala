@@ -63,6 +63,7 @@ object EhealthPolicy {
           | (resource.owner_id in subject.primary_patients)
           | (subject.id in resource.owner_responsible_physicians)
       ),
+      
       // For cardiologists.
       PolicySet("policyset:4") := when (subject.department === "cardiology") apply PermitOverrides to (        
         // Permit for head physician.
@@ -73,18 +74,21 @@ object EhealthPolicy {
         
         Policy("policy:9") := deny
       ),
+      
       // For physicians of elder care department: only permit if admitted in care unit or treated in the last six months.
       OnlyPermitIff("policyset:5")(
           target = subject.department === "elder_care",
           (resource.owner_id in subject.admitted_patients_in_care_unit)
           | (resource.owner_id in subject.treated_in_last_six_months)
       ),
+      
       // For physicians of emergency department: only permit if patient status is bad (or the above).
       OnlyPermitIff("policyset:6")(
           target = subject.department === "emergency",   
           resource.patient_status === "bad"
       )
     ),
+    
     // For nurses.
     PolicySet("policyset:7") := when ("nurse" in subject.roles) apply FirstApplicable to (      
       // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
@@ -99,9 +103,8 @@ object EhealthPolicy {
       // Nurses can only view the patient's status of the last five days.
       Policy("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
       
-      // For nurses of cardiology department.
-      // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
-      // TODO make this into a reusable pattern
+      // For nurses of cardiology department: they can only view the patient status of a patient 
+      // in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
       OnlyPermitIff("policyset:8")(
           target = subject.department === "cardiology",
           (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
@@ -113,7 +116,8 @@ object EhealthPolicy {
         // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
         Policy("policy:20") := deny iff !subject.allowed_to_access_pms,
         
-        // Nurses of the elder care department can only view the patient status of a patient who is currently admitted to their nurse unit and for whome they are assigned responsible.
+        // Nurses of the elder care department can only view the patient status of a patient 
+        // who is currently admitted to their nurse unit and for whome they are assigned responsible.
         OnlyPermitIff("policySet:10")(
             target = AlwaysTrue,
             (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
@@ -123,7 +127,8 @@ object EhealthPolicy {
     ),
     // For patients
     PolicySet("policyset:11") := when ("patient" in subject.roles) apply FirstApplicable to (      
-	      // A patient can only access the PMS if (still) allowed by the hospital (e.g., has subscribed to the PMS, but is not paying any more).
+	      // A patient can only access the PMS if (still) allowed by the hospital (e.g., has 
+    	  // subscribed to the PMS, but is not paying any more).
 	      Policy("policy:23") := deny iff !subject.allowed_to_access_pms,
 	      
 	      // A patient can only view his own status.
