@@ -118,7 +118,7 @@ object EhealthPolicy {
       Policy("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
       
       // For nurses of cardiology department.
-      new PolicySet("policyset:8")(
+      new PolicySet("policyset:8")( // TODO make this into a reusable pattern
         target = subject.department === "cardiology",
         pca = PermitOverrides,
         
