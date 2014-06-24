@@ -79,6 +79,9 @@ class IncompletePolicyWithId(private val id: String) {
   def :=(targetAndEffect: TargetAndEffect): Policy = 
     new Policy(id)(targetAndEffect.target, targetAndEffect.effect)
     
+  def :=(onlyTarget: OnlyTarget): TargetAndId =
+    new TargetAndId(id, onlyTarget.target)
+    
 }
 
 class TargetEffectAndCondition(val target: Expression, val effect: Effect, val condition: Expression) 
@@ -89,24 +92,46 @@ class TargetAndEffect(val target: Expression, val effect: Effect) {
     new TargetEffectAndCondition(target, effect, condition)
 }
 object deny {
-  def apply(target: Expression=AlwaysTrue) = 
-    new TargetAndEffect(target, Deny)
-  
   /**
-   * No target given
+   * Needed if no target is given
    */
   def iff(condition: Expression): TargetEffectAndCondition =
     new TargetEffectAndCondition(AlwaysTrue, Deny, condition)
 }
-object permit {
-  def apply(target: Expression=AlwaysTrue) = 
-    new TargetAndEffect(target, Permit)  
-  
+object permit {  
   /**
-   * No target given
+   * Needed if no target is given
    */
   def iff(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(AlwaysTrue, Permit, condition)
+    new TargetEffectAndCondition(AlwaysTrue, Deny, condition)
+}
+class TargetAndId(val id: String, val target: Expression) {
+  
+  def permit: Policy =
+    new Policy(id)(target, Permit)
+  
+  def deny: Policy =
+    new Policy(id)(target, Deny)
+}
+class OnlyTarget(val target: Expression) {
+  
+  def permit(condition: Expression): TargetEffectAndCondition =
+    new TargetEffectAndCondition(target, Permit, condition)
+  
+  def deny(condition: Expression): TargetEffectAndCondition =
+    new TargetEffectAndCondition(target, Deny, condition)
+  
+}
+object when {
+  def apply(target: Expression = AlwaysTrue): OnlyTarget =
+    new OnlyTarget(target)
+}
+object iff {
+  /**
+   * Just to add the keyword "iff"
+   */
+  def apply(condition: Expression): Expression =
+    condition
 }
 object Policy { // not really a companion object of Policy, but the start of the natural DSL for policies
   def apply(id: String) =

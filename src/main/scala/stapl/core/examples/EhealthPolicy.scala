@@ -44,7 +44,7 @@ object EhealthPolicy {
     pca = DenyOverrides,
     
     // The consent policy.
-    Policy("policy:1") := deny("medical_personnel" in subject.roles) iff !subject.triggered_breaking_glass & (subject.id in resource.owner_withdrawn_consents),
+    Policy("policy:1") := when ("medical_personnel" in subject.roles) deny iff (!subject.triggered_breaking_glass & (subject.id in resource.owner_withdrawn_consents)),
     
     // Only physicians, nurses and patients can access the monitoring system.
     Policy("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),
@@ -58,8 +58,8 @@ object EhealthPolicy {
       Policy("policy:3") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles)),
       
       // All of the previous physicians can access the monitoring system in case of emergency.
-      Policy("policy:4") := permit((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
-        iff subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency,
+      Policy("policy:4") := when ((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
+        permit iff (subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency),
       
       // For GPs.
       new PolicySet("policyset:3")(
@@ -76,7 +76,7 @@ object EhealthPolicy {
         pca = PermitOverrides,
         
         // Permit for head physician.
-        Policy("policy:7") := permit (subject.is_head_physician),
+        Policy("policy:7") := when (subject.is_head_physician) permit,
         
         // Permit if treated the patient or treated in team.
         Policy("policy:8") := permit iff (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team),
@@ -123,7 +123,7 @@ object EhealthPolicy {
         pca = PermitOverrides,
         
         // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
-        Policy("policy:18") := permit (subject.department === "cardiology") iff (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days))),
+        Policy("policy:18") := when (subject.department === "cardiology") permit iff (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days))),
 
         defaultDeny("policy:19")),
       // For nurses of the elder care department.
