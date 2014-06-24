@@ -1,5 +1,7 @@
 package stapl.core
 
+import stapl.core.PermitOverrides
+
 /*********************************************
  * The basic constructors
  */
@@ -59,18 +61,21 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
 
 
 /****************************************
- * The more natural DSL for policies
+ * The more natural DSL for policies and policy sets
  * 
- * Examples: 
+ * Examples for policies: 
  * 	Policy("policy1") := when ("role" in subject.roles) deny iff (subject.allowed === false)
  *  Policy("policy2") := deny iff (subject.allowed === false)
  *  Policy("policy3") := when ("role" in subject.roles) deny
  *  Policy("policy4") := deny
+ *  
+ * Examples for policy sets:
+ * 	TODO
  */
 class OnlyId(private val id: String) {
 	
-  def :=(targetEffectAndCondition: TargetEffectAndCondition): Policy =
-    new Policy(id)(targetEffectAndCondition.target, targetEffectAndCondition.effect, targetEffectAndCondition.condition)
+  def :=(t: TargetEffectAndCondition): Policy =
+    new Policy(id)(t.target, t.effect, t.condition)
     
   def :=(targetAndEffect: TargetAndEffect): Policy = 
     new Policy(id)(targetAndEffect.target, targetAndEffect.effect)
@@ -82,6 +87,9 @@ class OnlyId(private val id: String) {
     case deny => new Policy(id)(AlwaysTrue, Deny)
     case permit => new Policy(id)(AlwaysTrue, Permit)
   }
+  
+  def :=(t: TargetPCAAndSubpolicies): PolicySet =
+    new PolicySet(id)(t.target, t.pca, t.subpolicies: _*)
     
 }
 
@@ -115,6 +123,12 @@ class TargetAndId(val id: String, val target: Expression) {
   def deny: Policy =
     new Policy(id)(target, Deny)
 }
+class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) 
+class TargetAndPCA(val target: Expression, val pca: CombinationAlgorithm) {
+  
+  def to(subpolicies: AbstractPolicy*): TargetPCAAndSubpolicies =
+    new TargetPCAAndSubpolicies(target, pca, subpolicies: _*)
+}
 class OnlyTarget(val target: Expression) {
   
   def permit(condition: Expression): TargetEffectAndCondition =
@@ -123,10 +137,30 @@ class OnlyTarget(val target: Expression) {
   def deny(condition: Expression): TargetEffectAndCondition =
     new TargetEffectAndCondition(target, Deny, condition)
   
+  def apply(pca: CombinationAlgorithm): TargetAndPCA =
+    new TargetAndPCA(target, pca)
+  
 }
 object when {
   def apply(target: Expression = AlwaysTrue): OnlyTarget =
     new OnlyTarget(target)
+}
+object apply {
+  
+  /**
+   * If no target is given for a policy set 
+   */
+  def apply(pca: CombinationAlgorithm): TargetAndPCA =
+    new TargetAndPCA(AlwaysTrue, pca)
+  
+  def PermitOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies = 
+    new TargetPCAAndSubpolicies(AlwaysTrue,stapl.core.PermitOverrides, subpolicies.subpolicies: _*)
+}
+class OnlySubpolicies(val subpolicies: AbstractPolicy*)
+object to {
+  
+  def apply(subpolicies: AbstractPolicy*): OnlySubpolicies =
+    new OnlySubpolicies(subpolicies: _*)
 }
 object iff {
   /**
@@ -136,6 +170,10 @@ object iff {
     condition
 }
 object Policy { // not really a companion object of Policy, but the start of the natural DSL for policies
+  def apply(id: String) =
+    new OnlyId(id)
+}
+object PolicySet {
   def apply(id: String) =
     new OnlyId(id)
 }
