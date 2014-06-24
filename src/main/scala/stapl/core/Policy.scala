@@ -6,27 +6,45 @@ import grizzled.slf4j.Logging
  * The basic constructors
  */
 abstract class AbstractPolicy(val id:String) {
+  var parent: Option[PolicySet] = None
+  
   def evaluate(ctx: EvaluationCtx): Result
   
   def isApplicable(ctx: EvaluationCtx): Boolean
   
   def allIds: List[String]
+  
+  /**
+   * Returns the ordered list of all ids from the top of the policy tree
+   * to this element of the policy tree, this element first and working to the top.
+   */  
+  def treePath: List[String] = parent match {
+    case Some(parent) => id :: parent.treePath
+    case None => List(id)
+  }
+  
+  /**
+   * Returns the fully qualified id of this element of the policy tree.
+   * This id is the concatenation of all ids of the elements on the tree
+   * path of this element, starting from the top and working down. 
+   */
+  def fqid: String = treePath.reverse.mkString(">") // TODO performance optimization: cache this stuff
 }
 
 class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, var condition: Expression=AlwaysTrue) 
 	extends AbstractPolicy(id) with Logging {
   
   override def evaluate(ctx:EvaluationCtx): Result = {
-    debug("FLOW: starting evaluation of Policy #" + id)
+    debug("FLOW: starting evaluation of Policy #" + fqid)
     if (!isApplicable(ctx)) {
-      debug("FLOW: Policy #" + id + " was NotApplicable because of target")
+      debug(s"FLOW: Policy #$fqid was NotApplicable because of target")
       NotApplicable
     } else {
       if (condition.evaluate(ctx)) {
-    	debug("FLOW: Policy #" + id + " returned " + effect)
+    	debug(s"FLOW: Policy #$fqid returned $effect")
         effect
       } else {
-    	debug("FLOW: Policy #" + id + " was NotApplicable because of condition")
+    	debug(s"FLOW: Policy #$fqid was NotApplicable because of condition")
         NotApplicable
       }
     }
@@ -36,12 +54,14 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
   
   override def allIds: List[String] = List(id)
   
-  override def toString = id
+  override def toString = s"Policy #$fqid"
 }
 
 class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, _subPolicies: AbstractPolicy*) 
 	extends AbstractPolicy(id) with Logging {  
   val subPolicies: List[AbstractPolicy] = List(_subPolicies:_*)
+  // assign this PolicySet as parent to the children
+  subPolicies.foreach(_.parent = Some(this))
   
   require(!subPolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
   //require(uniqueIds, "All policies require a unique ID")
@@ -53,13 +73,13 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
   }
   
   override def evaluate(ctx: EvaluationCtx): Result = {
-    debug("FLOW: starting evaluation of PolicySet #" + id)
+    debug(s"FLOW: starting evaluation of PolicySet #$fqid")
     if (isApplicable(ctx)) {
       val result = pca.combine(subPolicies, ctx)
-      debug("FLOW: PolicySet #" + id + " returned " + result)
+      debug(s"FLOW: PolicySet #$fqid returned $result")
       result
     } else {
-      debug("FLOW: PolicySet #" + id + " was NotApplicable because of target")
+      debug(s"FLOW: PolicySet #$fqid was NotApplicable because of target")
       NotApplicable
     }
   }
@@ -70,7 +90,7 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
   
   override def toString = {
     val subs = subPolicies.toString
-    s"$id = [${subs.substring(5, subs.length-1)}]"
+    s"PolicySet #$id = [${subs.substring(5, subs.length-1)}]"
   }
 }
 
