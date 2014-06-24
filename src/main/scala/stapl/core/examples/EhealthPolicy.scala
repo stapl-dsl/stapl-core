@@ -125,7 +125,7 @@ object EhealthPolicy {
         // Nurses of the cardiology department can only view the patient status of a patient in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
         Policy("policy:18") := when (subject.department === "cardiology") permit iff (resource.owner_id in subject.admitted_patients_in_nurse_unit) & (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days))),
 
-        defaultDeny("policy:19")),
+        Policy("policy:19") := deny),
       // For nurses of the elder care department.
       new PolicySet("policyset:9")(
         target = subject.department === "elder_care",
@@ -153,5 +153,5 @@ object EhealthPolicy {
       // A patient can only view his own status.
       Policy("policy:24") := deny iff !(resource.owner_id === subject.id),
       
-      defaultPermit("policy:25")))
+      Policy("policy:25") := permit))
 }

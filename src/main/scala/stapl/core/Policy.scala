@@ -59,28 +59,29 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
 
 
 /****************************************
- * The more natural DSL
+ * The more natural DSL for policies
  * 
- * Example for policies: 
- * 	Policy("id")
- *  	deny "role" in subject.roles iff subject.allowed === false
+ * Examples: 
+ * 	Policy("policy1") := when ("role" in subject.roles) deny iff (subject.allowed === false)
+ *  Policy("policy2") := deny iff (subject.allowed === false)
+ *  Policy("policy3") := when ("role" in subject.roles) deny
+ *  Policy("policy4") := deny
  */
-class IncompletePolicyWithId(private val id: String) {
-  
-  /**
-   * If all elements are given
-   */
+class OnlyId(private val id: String) {
+	
   def :=(targetEffectAndCondition: TargetEffectAndCondition): Policy =
     new Policy(id)(targetEffectAndCondition.target, targetEffectAndCondition.effect, targetEffectAndCondition.condition)
-  
-  /**
-   * If no condition is given
-   */
+    
   def :=(targetAndEffect: TargetAndEffect): Policy = 
     new Policy(id)(targetAndEffect.target, targetAndEffect.effect)
     
   def :=(onlyTarget: OnlyTarget): TargetAndId =
     new TargetAndId(id, onlyTarget.target)
+ 
+  def :=(effectKeyword: EffectKeyword): Policy = effectKeyword match {
+    case deny => new Policy(id)(AlwaysTrue, Deny)
+    case permit => new Policy(id)(AlwaysTrue, Permit)
+  }
     
 }
 
@@ -91,14 +92,15 @@ class TargetAndEffect(val target: Expression, val effect: Effect) {
   def iff(condition: Expression): TargetEffectAndCondition =
     new TargetEffectAndCondition(target, effect, condition)
 }
-object deny {
+class EffectKeyword // FIXME this cannot be the best way to do this...
+case object deny extends EffectKeyword {
   /**
    * Needed if no target is given
    */
   def iff(condition: Expression): TargetEffectAndCondition =
     new TargetEffectAndCondition(AlwaysTrue, Deny, condition)
 }
-object permit {  
+case object permit extends EffectKeyword {  
   /**
    * Needed if no target is given
    */
@@ -135,5 +137,5 @@ object iff {
 }
 object Policy { // not really a companion object of Policy, but the start of the natural DSL for policies
   def apply(id: String) =
-    new IncompletePolicyWithId(id)
+    new OnlyId(id)
 }
