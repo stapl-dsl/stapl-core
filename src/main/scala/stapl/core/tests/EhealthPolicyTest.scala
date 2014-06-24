@@ -12,6 +12,7 @@ import stapl.core.NotApplicable
 import stapl.core.Deny
 import stapl.core.Permit
 import org.scalatest.junit.AssertionsForJUnit
+import org.joda.time.LocalDateTime
 
 object EhealthPolicyTest {
   
@@ -107,5 +108,38 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         subject.department -> "cardiology",
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Permit)
+  }
+  
+  @Test def testNurseOfElderCareDepartment() {
+    // permit
+    assert(pdp.evaluate("maarten", "view", "doc123",
+        subject.roles -> List("medical_personnel", "nurse"),
+        subject.triggered_breaking_glass -> false,
+        subject.department -> "elder_care",
+        subject.allowed_to_access_pms -> true,
+        subject.shift_start -> new LocalDateTime(2014, 6, 24, 9, 0, 0),
+        subject.shift_stop -> new LocalDateTime(2014, 6, 24, 17, 0, 0),
+        subject.location -> "hospital",
+        subject.admitted_patients_in_nurse_unit -> List("patientX", "patientY"),
+        subject.responsible_patients -> List("patientX", "patientZ"),
+        resource.owner_id -> "patientX",
+        resource.owner_withdrawn_consents -> List("subject1"),
+        resource.type_ -> "patientstatus",
+        resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
+        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Permit)
+        
+    // deny if not allowed to access the PMS
+    assert(pdp.evaluate("maarten", "view", "doc123",
+        subject.roles -> List("medical_personnel", "nurse"),
+        subject.triggered_breaking_glass -> false,
+        subject.department -> "elder_care",
+        subject.allowed_to_access_pms -> false,
+        subject.shift_start -> new LocalDateTime(2014, 6, 24, 9, 0, 0),
+        subject.shift_stop -> new LocalDateTime(2014, 6, 24, 17, 0, 0),
+        subject.location -> "hospital",
+        resource.owner_withdrawn_consents -> List("subject1"),
+        resource.type_ -> "patientstatus",
+        resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
+        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Deny)
   }
 }

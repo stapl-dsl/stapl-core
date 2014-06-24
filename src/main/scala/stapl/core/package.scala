@@ -2,6 +2,7 @@ package stapl
 
 import scala.language.implicitConversions
 import stapl.core.SimpleAttribute
+import org.joda.time.LocalDateTime
 
 package object core {
   
@@ -15,6 +16,7 @@ package object core {
   
   implicit def string2Value(string: String): ConcreteValue = new StringImpl(string)
   
+  implicit def dateTime2Value(dt: LocalDateTime): ConcreteValue = new DateTimeImpl(dt)
   
   implicit def stringSeq2Value(seq: Seq[String]): ConcreteValue = new StringSeqImpl(seq)
   

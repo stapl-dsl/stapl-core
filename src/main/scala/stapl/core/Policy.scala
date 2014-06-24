@@ -1,6 +1,6 @@
 package stapl.core
 
-import stapl.core.PermitOverrides
+import grizzled.slf4j.Logging
 
 /*********************************************
  * The basic constructors
@@ -13,16 +13,24 @@ abstract class AbstractPolicy(val id:String) {
   def allIds: List[String]
 }
 
-class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, var condition: Expression=AlwaysTrue) extends AbstractPolicy(id) {
+class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, var condition: Expression=AlwaysTrue) 
+	extends AbstractPolicy(id) with Logging {
   
-  override def evaluate(ctx:EvaluationCtx): Result =
-    if (!isApplicable(ctx))
+  override def evaluate(ctx:EvaluationCtx): Result = {
+    debug("FLOW: starting evaluation of Policy #" + id)
+    if (!isApplicable(ctx)) {
+      debug("FLOW: Policy #" + id + " was NotApplicable because of target")
       NotApplicable
-    else
-      if (condition.evaluate(ctx))
+    } else {
+      if (condition.evaluate(ctx)) {
+    	debug("FLOW: Policy #" + id + " returned " + effect)
         effect
-      else
+      } else {
+    	debug("FLOW: Policy #" + id + " was NotApplicable because of condition")
         NotApplicable
+      }
+    }
+  }
   
   override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
   
@@ -31,7 +39,8 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
   override def toString = id
 }
 
-class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, _subPolicies: AbstractPolicy*) extends AbstractPolicy(id) {  
+class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, _subPolicies: AbstractPolicy*) 
+	extends AbstractPolicy(id) with Logging {  
   val subPolicies: List[AbstractPolicy] = List(_subPolicies:_*)
   
   require(!subPolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
@@ -43,11 +52,17 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
     distinctIds.size == ids.size
   }
   
-  override def evaluate(ctx: EvaluationCtx) = 
-    if (isApplicable(ctx))
-      pca.combine(subPolicies, ctx)
-    else
+  override def evaluate(ctx: EvaluationCtx): Result = {
+    debug("FLOW: starting evaluation of PolicySet #" + id)
+    if (isApplicable(ctx)) {
+      val result = pca.combine(subPolicies, ctx)
+      debug("FLOW: PolicySet #" + id + " returned " + result)
+      result
+    } else {
+      debug("FLOW: PolicySet #" + id + " was NotApplicable because of target")
       NotApplicable
+    }
+  }
   
   override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
   
@@ -84,8 +99,8 @@ class OnlyId(private val id: String) {
     new TargetAndId(id, onlyTarget.target)
  
   def :=(effectKeyword: EffectKeyword): Policy = effectKeyword match {
-    case deny => new Policy(id)(AlwaysTrue, Deny)
-    case permit => new Policy(id)(AlwaysTrue, Permit)
+    case `deny` => new Policy(id)(AlwaysTrue, Deny)
+    case `permit` => new Policy(id)(AlwaysTrue, Permit)
   }
   
   def :=(t: TargetPCAAndSubpolicies): PolicySet =
@@ -113,7 +128,7 @@ case object permit extends EffectKeyword {
    * Needed if no target is given
    */
   def iff(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(AlwaysTrue, Deny, condition)
+    new TargetEffectAndCondition(AlwaysTrue, Permit, condition)
 }
 class TargetAndId(val id: String, val target: Expression) {
   
