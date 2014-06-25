@@ -9,7 +9,7 @@ case class Obligation(val action: ObligationAction, val fulfillOn: Effect)
  * Class used for representing the action to be performed as specified in
  * an obligation.
  */
-abstract class ObligationAction
+abstract class ObligationAction // TODO better name for this? very long...
 
 case class LogObligationAction(val msg: Value) extends ObligationAction
 object log {
