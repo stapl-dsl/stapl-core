@@ -119,6 +119,12 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
  * 	TODO
  */
 class OnlyId(private val id: String) {
+  
+  def :=(t: TargetEffectConditionAndObligations): Policy =
+    new Policy(id)(t.target, t.effect, t.condition, List(t.obligations: _*))
+    
+  def :=(t: TargetPCASubpoliciesAndObligations): PolicySet =
+    new PolicySet(id)(t.target, t.pca, t.subpolicies, t.obligations)
 	
   def :=(t: TargetEffectAndCondition): Policy =
     new Policy(id)(t.target, t.effect, t.condition)
@@ -139,7 +145,20 @@ class OnlyId(private val id: String) {
     
 }
 
-class TargetEffectAndCondition(val target: Expression, val effect: Effect, val condition: Expression) 
+class ObligationActionWithOn(val obligationAction: ObligationAction) {
+  
+  def on(effect: Effect): Obligation =
+    new Obligation(obligationAction, effect)
+}
+
+class TargetEffectAndCondition(val target: Expression, val effect: Effect, val condition: Expression) {
+  
+  def performing(obligations: Obligation*): TargetEffectConditionAndObligations = 
+    new TargetEffectConditionAndObligations(target, effect, condition, obligations: _*)
+}
+
+class TargetEffectConditionAndObligations(val target: Expression, 
+    val effect: Effect, val condition: Expression, val obligations: Obligation*)
 
 class TargetAndEffect(val target: Expression, val effect: Effect) {
   
@@ -169,12 +188,22 @@ class TargetAndId(val id: String, val target: Expression) {
   def deny: Policy =
     new Policy(id)(target, Deny)
 }
-class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) 
+
+class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) {
+  
+  def performing(obligations: Obligation*): TargetPCASubpoliciesAndObligations = 
+    new TargetPCASubpoliciesAndObligations(target, pca, List(subpolicies: _*), List(obligations: _*))
+} 
+
+class TargetPCASubpoliciesAndObligations(val target: Expression, val pca: CombinationAlgorithm, 
+    val subpolicies: List[AbstractPolicy], val obligations: List[Obligation])
+
 class TargetAndPCA(val target: Expression, val pca: CombinationAlgorithm) {
   
   def to(subpolicies: AbstractPolicy*): TargetPCAAndSubpolicies =
     new TargetPCAAndSubpolicies(target, pca, subpolicies: _*)
 }
+
 class OnlyTarget(val target: Expression) {
   
   def permit(condition: Expression): TargetEffectAndCondition =

@@ -41,7 +41,10 @@ object EhealthPolicy {
   // The policy set for "view patient status".
   val naturalPolicy = PolicySet("jisa13-final3") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
     // The consent policy.
-    Policy("policy:1") := when ("medical_personnel" in subject.roles) deny iff (!subject.triggered_breaking_glass & (subject.id in resource.owner_withdrawn_consents)),
+    PolicySet("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
+        Policy("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
+        Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure") on Permit)
+    ) performing (log("just another log on Permit") on Permit),
     
     // Only physicians, nurses and patients can access the monitoring system.
     Policy("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),

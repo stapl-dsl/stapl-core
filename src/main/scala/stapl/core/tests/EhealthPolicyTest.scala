@@ -27,8 +27,8 @@ class EhealthPolicyTest extends AssertionsForJUnit {
 
   import EhealthPolicy._
   // set up the PDP, use an empty attribute finder since we will provide all attributes in the request
-  val pdp = new PDP(javaLikePolicy, new AttributeFinder)
-  //val pdp = new PDP(naturalPolicy, new AttributeFinder)
+  //val pdp = new PDP(javaLikePolicy, new AttributeFinder)
+  val pdp = new PDP(naturalPolicy, new AttributeFinder)
 
   @Before def setup() {
     // nothing to do

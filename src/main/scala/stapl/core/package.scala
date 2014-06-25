@@ -53,6 +53,9 @@ package object core {
   def abs(value: Value): Operation = AbsoluteValue(value)
   
   implicit def decision2Result(decision: Decision): Result = Result(decision)
+  
+  // For the natural policy language 
+  implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
 	
 	
   val action = new AttributeContainer(ACTION)
