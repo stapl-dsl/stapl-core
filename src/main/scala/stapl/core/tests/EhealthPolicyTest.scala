@@ -101,8 +101,8 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3")) === 
           Result(Permit,List(
-              new Obligation(log(subject.id + " performed breaking-the-glass procedure"), Permit),
-              new Obligation(log("just another log on Permit"), Permit)
+              log(subject.id + " performed breaking-the-glass procedure"),
+              log("just another log on Permit")
           )))
   }
 
@@ -135,8 +135,8 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === 
           Result(Permit,List(
-              new Obligation(log(subject.id + " performed breaking-the-glass procedure"), Permit),
-              new Obligation(log("just another log on Permit"), Permit)
+              log(subject.id + " performed breaking-the-glass procedure"),
+              log("just another log on Permit")
           )))
   }
   

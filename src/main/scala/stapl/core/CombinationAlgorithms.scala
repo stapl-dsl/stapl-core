@@ -14,7 +14,7 @@ object PermitOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligations) => decision match {
+        case Result(decision, obligationActions) => decision match {
           // If a subpolicy returns Permit: return this result with its obligations,
           //	do not evaluate the rest for other obligations. 
           // TODO is this correct?
@@ -22,8 +22,8 @@ object PermitOverrides extends CombinationAlgorithm {
           // 	them with Deny
           // If all subpolicies return NotApplicable: return NotApplicable without obligations
           // See XACML2 specs, Section 7.14
-          case Permit => Result(decision, obligations) 				 
-          case Deny => combine(rest, Result(Deny, tempResult.obligations ::: obligations)) 
+          case Permit => Result(decision, obligationActions) 				 
+          case Deny => combine(rest, Result(Deny, tempResult.obligationActions ::: obligationActions)) 
           case NotApplicable => combine(rest, tempResult) 			
         } 
       }
@@ -40,7 +40,7 @@ object DenyOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligations) => decision match {
+        case Result(decision, obligationActions) => decision match {
           // If a subpolicy returns Deny: return this result with its obligations,
           //	do not evaluate the rest for other obligations. 
           // TODO is this correct?
@@ -48,8 +48,8 @@ object DenyOverrides extends CombinationAlgorithm {
           // 	them with Permit
           // If all subpolicies return NotApplicable: return NotApplicable without obligations
           // See XACML2 specs, Section 7.14
-	        case Deny => Result(decision, obligations)
-	        case Permit => combine(rest, Result(Permit, tempResult.obligations ::: obligations))
+	        case Deny => Result(decision, obligationActions)
+	        case Permit => combine(rest, Result(Permit, tempResult.obligationActions ::: obligationActions))
 	        case NotApplicable => combine(rest, tempResult)
         }
       }

@@ -43,7 +43,7 @@ object EhealthPolicy {
     // The consent policy.
     PolicySet("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
         Policy("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
-        Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure") on Permit)
+        Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure"))
     ) performing (log("just another log on Permit") on Permit),
     
     // Only physicians, nurses and patients can access the monitoring system.
@@ -158,9 +158,7 @@ object EhealthPolicy {
 		            target = AlwaysTrue,
 		            effect = Permit,
 		            condition = subject.triggered_breaking_glass,
-		            obligations = List(
-		                new Obligation(log(subject.id + " performed breaking-the-glass procedure"), Permit)
-		            ))
+		            obligationActions = List(log(subject.id + " performed breaking-the-glass procedure")))
 		    ),
 		    obligations = List(
 		        new Obligation(log("just another log on Permit"), Permit)

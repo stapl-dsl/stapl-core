@@ -37,7 +37,7 @@ abstract class AbstractPolicy(val id:String) {
 }
 
 class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
-    var condition: Expression=AlwaysTrue, val obligations: List[Obligation] = List.empty) 
+    var condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
   override def evaluate(ctx:EvaluationCtx): Result = {
@@ -47,9 +47,8 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
       NotApplicable
     } else {
       if (condition.evaluate(ctx)) {
-    	val applicableObligations = obligations.filter(_.fulfillOn == effect)
-        debug(s"FLOW: Policy #$fqid returned $effect with obligations $applicableObligations")
-    	Result(effect, applicableObligations)
+        debug(s"FLOW: Policy #$fqid returned $effect with obligations $obligationActions")
+    	Result(effect, obligationActions)
       } else {
     	debug(s"FLOW: Policy #$fqid was NotApplicable because of condition")
         NotApplicable
@@ -85,8 +84,8 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
     if (isApplicable(ctx)) {
       val result = pca.combine(subpolicies, ctx)
       // add applicable obligations of our own
-      val applicableObligations = result.obligations ::: obligations.filter(_.fulfillOn == result.decision)
-      val finalResult = Result(result.decision, applicableObligations)
+      val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action)
+      val finalResult = Result(result.decision, applicableObligationActions)
       debug(s"FLOW: PolicySet #$fqid returned $finalResult")
       finalResult
     } else {
@@ -120,8 +119,8 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
  */
 class OnlyId(private val id: String) {
   
-  def :=(t: TargetEffectConditionAndObligations): Policy =
-    new Policy(id)(t.target, t.effect, t.condition, List(t.obligations: _*))
+  def :=(t: TargetEffectConditionAndObligationActions): Policy =
+    new Policy(id)(t.target, t.effect, t.condition, List(t.obligationActions: _*))
     
   def :=(t: TargetPCASubpoliciesAndObligations): PolicySet =
     new PolicySet(id)(t.target, t.pca, t.subpolicies, t.obligations)
@@ -153,12 +152,12 @@ class ObligationActionWithOn(val obligationAction: ObligationAction) {
 
 class TargetEffectAndCondition(val target: Expression, val effect: Effect, val condition: Expression) {
   
-  def performing(obligations: Obligation*): TargetEffectConditionAndObligations = 
-    new TargetEffectConditionAndObligations(target, effect, condition, obligations: _*)
+  def performing(obligationActions: ObligationAction*): TargetEffectConditionAndObligationActions = 
+    new TargetEffectConditionAndObligationActions(target, effect, condition, obligationActions: _*)
 }
 
-class TargetEffectConditionAndObligations(val target: Expression, 
-    val effect: Effect, val condition: Expression, val obligations: Obligation*)
+class TargetEffectConditionAndObligationActions(val target: Expression, 
+    val effect: Effect, val condition: Expression, val obligationActions: ObligationAction*)
 
 class TargetAndEffect(val target: Expression, val effect: Effect) {
   

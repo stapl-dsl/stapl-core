@@ -1,6 +1,6 @@
 package stapl.core
 
-case class Result(val decision: Decision, val obligations: List[Obligation] = List.empty)
+case class Result(val decision: Decision, val obligationActions: List[ObligationAction] = List.empty)
 
 sealed trait Decision
 
