@@ -1,6 +1,7 @@
 package stapl.core
 
 import scala.annotation.tailrec
+import stapl.core.pdp.EvaluationCtx
 
 trait CombinationAlgorithm {
   
@@ -13,9 +14,18 @@ object PermitOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Permit => Permit
-        case Deny => combine(rest, Deny)
-        case NotApplicable => combine(rest, tempResult)
+        case Result(decision, obligations) => decision match {
+          // If a subpolicy returns Permit: return this result with its obligations,
+          //	do not evaluate the rest for other obligations. 
+          // TODO is this correct?
+          // If all subpolicies return Deny: combine all their obligations and return 
+          // 	them with Deny
+          // If all subpolicies return NotApplicable: return NotApplicable without obligations
+          // See XACML2 specs, Section 7.14
+          case Permit => Result(decision, obligations) 				 
+          case Deny => combine(rest, Result(Deny, tempResult.obligations ::: obligations)) 
+          case NotApplicable => combine(rest, tempResult) 			
+        } 
       }
       case Nil => tempResult
     }
@@ -30,9 +40,18 @@ object DenyOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Deny => Deny
-        case Permit => combine(rest, Permit)
-        case NotApplicable => combine(rest, tempResult)
+        case Result(decision, obligations) => decision match {
+          // If a subpolicy returns Deny: return this result with its obligations,
+          //	do not evaluate the rest for other obligations. 
+          // TODO is this correct?
+          // If all subpolicies return Permit: combine all their obligations and return 
+          // 	them with Permit
+          // If all subpolicies return NotApplicable: return NotApplicable without obligations
+          // See XACML2 specs, Section 7.14
+	        case Deny => Result(decision, obligations)
+	        case Permit => combine(rest, Result(Permit, tempResult.obligations ::: obligations))
+	        case NotApplicable => combine(rest, tempResult)
+        }
       }
       case Nil => tempResult
     }
@@ -47,8 +66,12 @@ object FirstApplicable extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case result@(Permit | Deny) => result
-        case NotApplicable => combine(rest, NotApplicable)
+        case Result(decision, obligations) => decision match {
+          // Pass the decision and obligations of the first Permit or Deny
+          case Permit => Result(decision, obligations)
+          case Deny => Result(decision, obligations)
+          case NotApplicable => combine(rest, NotApplicable)
+        }
       }
       case Nil => tempResult
     }

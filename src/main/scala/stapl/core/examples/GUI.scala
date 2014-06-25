@@ -5,10 +5,14 @@ import scala.swing.Swing._
 import javax.swing.UIManager
 import scala.swing.event.ButtonClicked
 import java.awt.Font
-// scala-compiler.jar (comes with Scala) needs to be added to the classpath
 import scala.tools.nsc.interpreter.IMain
 import scala.tools.nsc.Settings
 import stapl.core._
+import stapl.core.pdp.PDP
+import stapl.core.pdp.RequestCtx
+import stapl.core.pdp.EvaluationCtx
+import stapl.core.pdp.AttributeFinderModule
+import stapl.core.pdp.AttributeFinder
 
 object GUI extends SimpleSwingApplication {
   

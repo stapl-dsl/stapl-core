@@ -1,7 +1,15 @@
-package stapl.core
+package stapl.core.pdp
 
 import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
+import stapl.core.Attribute
+import stapl.core.AttributeContainerType
+import stapl.core.AttributeNotFoundException
+import stapl.core.AttributeType
+import stapl.core.ConcreteValue
+import stapl.core.ListAttribute
+import stapl.core.SimpleAttribute
+import stapl.core.TypeCheckException
 
 sealed class AttributeFinder {
   type Modules = List[AttributeFinderModule]

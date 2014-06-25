@@ -1,6 +1,14 @@
-package stapl.core
+package stapl.core.pdp
 
-import scala.collection.mutable.Map
+import stapl.core.AbstractPolicy
+import stapl.core.Attribute
+import stapl.core.pdp.AttributeFinder
+import stapl.core.pdp.BasicEvaluationCtx
+import stapl.core.ConcreteValue
+import stapl.core.pdp.EvaluationCtx
+import stapl.core.pdp.RequestCtx
+import stapl.core.Decision
+import stapl.core.Result
 
 class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
   

@@ -2,6 +2,11 @@ package stapl.core.examples
 
 import stapl.core._
 import stapl.core.templates._
+import stapl.core.pdp.PDP
+import stapl.core.pdp.RequestCtx
+import stapl.core.pdp.EvaluationCtx
+import stapl.core.pdp.AttributeFinderModule
+import stapl.core.pdp.AttributeFinder
 
 object Example extends App {
 

@@ -4,9 +4,9 @@ import stapl.core.examples.EhealthPolicy
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import stapl.core.PDP
-import stapl.core.AttributeFinder
-import stapl.core.RequestCtx
+import stapl.core.pdp.PDP
+import stapl.core.pdp.AttributeFinder
+import stapl.core.pdp.RequestCtx
 import org.junit.Assert._
 import stapl.core.NotApplicable
 import stapl.core.Deny
@@ -23,7 +23,7 @@ class BehaviorTest extends AssertionsForJUnit {
 
   import EhealthPolicy._
   // set up the PDP, use an empty attribute finder since we will provide all attributes in the request
-  val pdp = new PDP(policy, new AttributeFinder)
+  val pdp = new PDP(naturalPolicy, new AttributeFinder)
 
   @Before def setup() {
     // nothing to do

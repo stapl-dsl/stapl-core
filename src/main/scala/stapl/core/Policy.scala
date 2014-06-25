@@ -1,6 +1,7 @@
 package stapl.core
 
 import grizzled.slf4j.Logging
+import stapl.core.pdp.EvaluationCtx
 
 /*********************************************
  * The basic constructors
@@ -8,6 +9,10 @@ import grizzled.slf4j.Logging
 abstract class AbstractPolicy(val id:String) {
   var parent: Option[PolicySet] = None
   
+  /**
+   * Each element in the policy tree should only return Obligations which
+   * apply its decision.
+   */
   def evaluate(ctx: EvaluationCtx): Result
   
   def isApplicable(ctx: EvaluationCtx): Boolean
@@ -31,7 +36,8 @@ abstract class AbstractPolicy(val id:String) {
   def fqid: String = treePath.reverse.mkString(">") // TODO performance optimization: cache this stuff
 }
 
-class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, var condition: Expression=AlwaysTrue) 
+class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
+    var condition: Expression=AlwaysTrue, val obligations: List[Obligation] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
   override def evaluate(ctx:EvaluationCtx): Result = {
@@ -41,8 +47,9 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
       NotApplicable
     } else {
       if (condition.evaluate(ctx)) {
-    	debug(s"FLOW: Policy #$fqid returned $effect")
-        effect
+    	val applicableObligations = obligations.filter(_.fulfillOn == effect)
+        debug(s"FLOW: Policy #$fqid returned $effect with obligations $applicableObligations")
+    	Result(effect, applicableObligations)
       } else {
     	debug(s"FLOW: Policy #$fqid was NotApplicable because of condition")
         NotApplicable
@@ -57,13 +64,14 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
   override def toString = s"Policy #$fqid"
 }
 
-class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, _subPolicies: AbstractPolicy*) 
-	extends AbstractPolicy(id) with Logging {  
-  val subPolicies: List[AbstractPolicy] = List(_subPolicies:_*)
-  // assign this PolicySet as parent to the children
-  subPolicies.foreach(_.parent = Some(this))
+class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, 
+    val subpolicies: List[AbstractPolicy], val obligations: List[Obligation] = List.empty) 
+	extends AbstractPolicy(id) with Logging {
   
-  require(!subPolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
+  // assign this PolicySet as parent to the children
+  subpolicies.foreach(_.parent = Some(this))
+  
+  require(!subpolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
   //require(uniqueIds, "All policies require a unique ID")
   
   private def uniqueIds(): Boolean = {
@@ -75,9 +83,12 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
   override def evaluate(ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of PolicySet #$fqid")
     if (isApplicable(ctx)) {
-      val result = pca.combine(subPolicies, ctx)
-      debug(s"FLOW: PolicySet #$fqid returned $result")
-      result
+      val result = pca.combine(subpolicies, ctx)
+      // add applicable obligations of our own
+      val applicableObligations = result.obligations ::: obligations.filter(_.fulfillOn == result.decision)
+      val finalResult = Result(result.decision, applicableObligations)
+      debug(s"FLOW: PolicySet #$fqid returned $finalResult")
+      finalResult
     } else {
       debug(s"FLOW: PolicySet #$fqid was NotApplicable because of target")
       NotApplicable
@@ -86,10 +97,10 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
   
   override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
   
-  override def allIds: List[String] = id :: List(subPolicies:_*).flatMap(_.allIds)
+  override def allIds: List[String] = id :: subpolicies.flatMap(_.allIds)
   
   override def toString = {
-    val subs = subPolicies.toString
+    val subs = subpolicies.toString
     s"PolicySet #$id = [${subs.substring(5, subs.length-1)}]"
   }
 }
@@ -124,7 +135,7 @@ class OnlyId(private val id: String) {
   }
   
   def :=(t: TargetPCAAndSubpolicies): PolicySet =
-    new PolicySet(id)(t.target, t.pca, t.subpolicies: _*)
+    new PolicySet(id)(t.target, t.pca, List(t.subpolicies: _*))
     
 }
 

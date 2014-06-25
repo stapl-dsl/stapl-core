@@ -1,6 +1,10 @@
-package stapl.core
+package stapl.core.pdp
 
 import grizzled.slf4j.Logging
+import stapl.core.ConcreteValue
+import stapl.core.pdp.RequestCtx
+import stapl.core.Attribute
+import stapl.core.pdp.AttributeFinder
 
 trait EvaluationCtx {
   

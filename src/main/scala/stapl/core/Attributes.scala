@@ -1,6 +1,7 @@
 package stapl.core
 
 import AttributeType._
+import stapl.core.pdp.EvaluationCtx
 
 sealed abstract class Attribute(cType: AttributeContainerType, name: String, aType: AttributeType) extends Value {
   

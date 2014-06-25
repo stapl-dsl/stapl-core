@@ -1,5 +1,7 @@
 package stapl.core
 
+import stapl.core.pdp.EvaluationCtx
+
 sealed abstract class Operation extends Value
 
 case class Addition(left: Value, right: Value) extends Operation {

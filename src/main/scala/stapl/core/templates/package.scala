@@ -19,5 +19,19 @@ package object templates {
         Policy("OnlyDenyIff-condition") := deny iff (condition),
         Policy("OnlyDenyIff-permit") := permit
     )
+  
+  def defaultPermit(id: String): Policy = 
+    new Policy(id)(
+	  target = AlwaysTrue,
+	  effect = Permit,
+	  condition = AlwaysTrue
+	)
+
+  def defaultDeny(id: String): Policy = 
+    new Policy(id)(
+	  target = AlwaysTrue,
+	  effect = Deny,
+	  condition = AlwaysTrue
+	)
 
 }

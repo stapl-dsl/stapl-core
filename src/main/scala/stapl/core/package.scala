@@ -51,6 +51,8 @@ package object core {
   
   
   def abs(value: Value): Operation = AbsoluteValue(value)
+  
+  implicit def decision2Result(decision: Decision): Result = Result(decision)
 	
 	
   val action = new AttributeContainer(ACTION)

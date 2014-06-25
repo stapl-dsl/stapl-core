@@ -1,6 +1,12 @@
-package stapl.core
+package stapl.core.pdp
 
 import scala.collection.mutable.Map
+import stapl.core.subject
+import stapl.core.resource
+import stapl.core.action
+import stapl.core.Attribute
+import stapl.core.ConcreteValue
+import stapl.core.string2Value
 
 /**
  * A class used for ...
