@@ -14,6 +14,8 @@ import stapl.core.Permit
 import org.scalatest.junit.AssertionsForJUnit
 import org.joda.time.LocalDateTime
 import stapl.core.Result
+import stapl.core.Obligation
+import stapl.core.log
 
 object EhealthPolicyTest {
   
@@ -52,40 +54,59 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Deny,List()))
   }
 
-  @Test def testPhysicianDepartment() {
+  @Test def testPhysicianDepartment1() {
     assert(pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> false,
         subject.department -> "department-not-allowed",
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Deny,List()))
-    assert(pdp.evaluate("maarten", "view", "doc123",
+  }
+
+  @Test def testPhysicianDepartment2() {
+    val result = pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> true,
         subject.department -> "cardiology",
         resource.type_ -> "patientstatus",
-        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Permit,List()))
-    assert(pdp.evaluate("maarten", "view", "doc123",
+        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten"))
+    assert(result.decision === Permit) // ignore the obligations
+  }
+
+  @Test def testPhysicianDepartment3() {
+    val result = pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> true,
         subject.department -> "elder_care",
         resource.type_ -> "patientstatus",
-        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Permit,List()))
-    assert(pdp.evaluate("maarten", "view", "doc123",
+        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten"))
+    assert(result.decision === Permit) // ignore the obligations
+  }
+
+  @Test def testPhysicianDepartment4() {
+    val result = pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> true,
         subject.department -> "emergency",
         resource.type_ -> "patientstatus",
-        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Permit,List()))
+        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten"))
+    assert(result.decision === Permit) // ignore the obligations
   }
 
-  @Test def testPermitPhysicianEmergency() {
+  @Test def testPermitPhysicianEmergency1() {
     assert(pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> true,
         subject.department -> "cardiology",
         resource.type_ -> "patientstatus",
-        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3")) === Result(Permit,List()))
+        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3")) === 
+          Result(Permit,List(
+              new Obligation(log(subject.id + " performed breaking-the-glass procedure"), Permit),
+              new Obligation(log("just another log on Permit"), Permit)
+          )))
+  }
+
+  @Test def testPermitPhysicianEmergency2() {        
     assert(pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> false,
@@ -93,6 +114,9 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3"),
         resource.operator_triggered_emergency -> true) === Result(Permit,List()))
+  }
+
+  @Test def testPermitPhysicianEmergency3() {
     assert(pdp.evaluate("maarten", "view", "doc123",
         subject.roles -> List("medical_personnel", "physician"),
         subject.triggered_breaking_glass -> false,
@@ -109,7 +133,11 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         subject.triggered_breaking_glass -> true,
         subject.department -> "cardiology",
         resource.type_ -> "patientstatus",
-        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === Result(Permit,List()))
+        resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === 
+          Result(Permit,List(
+              new Obligation(log(subject.id + " performed breaking-the-glass procedure"), Permit),
+              new Obligation(log("just another log on Permit"), Permit)
+          )))
   }
   
   @Test def testPermitNurseOfElderCareDepartment {
