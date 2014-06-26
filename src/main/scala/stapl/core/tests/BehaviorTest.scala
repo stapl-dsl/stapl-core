@@ -8,9 +8,7 @@ import stapl.core.pdp.PDP
 import stapl.core.pdp.AttributeFinder
 import stapl.core.pdp.RequestCtx
 import org.junit.Assert._
-import stapl.core.NotApplicable
-import stapl.core.Deny
-import stapl.core.Permit
+import stapl.core._
 import org.scalatest.junit.AssertionsForJUnit
 
 object BehaviorTest {
@@ -27,6 +25,19 @@ class BehaviorTest extends AssertionsForJUnit {
 
   @Before def setup() {
     // nothing to do
+  }
+  
+  @Test def testUndefinedAttribute() {
+    val subject = stapl.core.subject // FIXME do we work on the single subject object here? we need a local copy of some sort
+    val resource = stapl.core.resource
+    val action = stapl.core.action
+    val env = stapl.core.environment
+
+    subject.roles = ListAttribute(String)
+
+    intercept[AttributeDoesNotExistException] {
+    	Policy("p") := permit iff (subject.nonexistingAttribute === "a-value")
+    }
   }
 
   @Test def testWrongTypeGiven1() {
