@@ -69,6 +69,11 @@
 			<artifactId>grizzled-slf4j_2.10</artifactId>
 			<version>1.0.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.clapper</groupId>
+			<artifactId>grizzled-scala_2.10</artifactId>
+			<version>1.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>

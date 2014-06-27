@@ -1,0 +1,102 @@
+// The policy set for "view patient status".
+PolicySet("jisa13-final3") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
+  // The consent policy.
+  PolicySet("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
+      Policy("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
+      Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure"))
+  ) performing (log("just another log on Permit") on Permit),
+  
+  // Only physicians, nurses and patients can access the monitoring system.
+  Policy("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),
+  
+  // For physicians.
+  PolicySet("policyset:2") := when ("physician" in subject.roles) apply FirstApplicable to (      
+    // Of the physicians, only gps, physicians of the cardiology department, physicians of the elder care department and physicians of the emergency department can access the monitoring system.
+    Policy("policy:3") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles)),
+    
+    // All of the previous physicians can access the monitoring system in case of emergency.
+    Policy("policy:4") := when ((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
+      permit iff (subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency),
+    
+    // For GPs: only permit if in consultation or treated in the last six months or primary physician or responsible in the system.
+    OnlyPermitIff("policyset:3")(
+        target = "gp" in subject.roles,
+        (resource.owner_id === subject.current_patient_in_consultation)
+        | (resource.owner_id in subject.treated_in_last_six_months)
+        | (resource.owner_id in subject.primary_patients)
+        | (subject.id in resource.owner_responsible_physicians)
+    ),
+    
+    // For cardiologists.
+    PolicySet("policyset:4") := when (subject.department === "cardiology") apply PermitOverrides to (        
+      // Permit for head physician.
+      Policy("policy:7") := when (subject.is_head_physician) permit,
+      
+      // Permit if treated the patient or treated in team.
+      Policy("policy:8") := permit iff (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team),
+      
+      Policy("policy:9") := deny
+    ),
+    
+    // For physicians of elder care department: only permit if admitted in care unit or treated in the last six months.
+    OnlyPermitIff("policyset:5")(
+        target = subject.department === "elder_care",
+        (resource.owner_id in subject.admitted_patients_in_care_unit)
+        | (resource.owner_id in subject.treated_in_last_six_months)
+    ),
+    
+    // For physicians of emergency department: only permit if patient status is bad (or the above).
+    OnlyPermitIff("policyset:6")(
+        target = subject.department === "emergency",   
+        resource.patient_status === "bad"
+    )
+  ),
+  
+  // For nurses.
+  PolicySet("policyset:7") := when ("nurse" in subject.roles) apply FirstApplicable to (      
+    // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
+    Policy("policy:14") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care")),
+    
+    // Nurses can only access the PMS during their shifts.
+    Policy("policy:15") := deny iff !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
+    
+    // Nurses can only access the PMS from the hospital.
+    Policy("policy:16") := deny iff !(subject.location === "hospital"),
+    
+    // Nurses can only view the patient's status of the last five days.
+    Policy("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
+    
+    // For nurses of cardiology department: they can only view the patient status of a patient 
+    // in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
+    OnlyPermitIff("policyset:8")(
+        target = subject.department === "cardiology",
+        (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
+        	& (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
+    ),
+      
+    // For nurses of the elder care department.
+    PolicySet("policyset:9") := when (subject.department === "elder_care") apply DenyOverrides to (
+      // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
+      Policy("policy:20") := deny iff !subject.allowed_to_access_pms,
+      
+      // Nurses of the elder care department can only view the patient status of a patient 
+      // who is currently admitted to their nurse unit and for whome they are assigned responsible.
+      OnlyPermitIff("policySet:10")(
+          target = AlwaysTrue,
+          (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
+          	& (resource.owner_id in subject.responsible_patients)
+      )
+    )
+  ),
+  // For patients
+  PolicySet("policyset:11") := when ("patient" in subject.roles) apply FirstApplicable to (      
+      // A patient can only access the PMS if (still) allowed by the hospital (e.g., has 
+  	  // subscribed to the PMS, but is not paying any more).
+      Policy("policy:23") := deny iff !subject.allowed_to_access_pms,
+      
+      // A patient can only view his own status.
+      Policy("policy:24") := deny iff !(resource.owner_id === subject.id),
+      
+      Policy("policy:25") := permit
+  )
+)
