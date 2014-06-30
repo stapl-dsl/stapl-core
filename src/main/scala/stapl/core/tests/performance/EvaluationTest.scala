@@ -7,54 +7,110 @@ import org.joda.time.LocalDateTime
 import stapl.core.Result
 import stapl.core.Deny
 import stapl.core.AbstractPolicy
+import stapl.core.parser.PolicyParser
+import stapl.core.pdp.AttributeFinderModule
+import stapl.core.AttributeContainerType
+import stapl.core.AttributeType
+import stapl.core.ConcreteValue
+import stapl.core.pdp.EvaluationCtx
+import stapl.core.SUBJECT
+import stapl.core.RESOURCE
+import stapl.core.ENVIRONMENT
+import stapl.core.ACTION
+import stapl.core.SimpleAttribute
+import stapl.core.String
+import stapl.core.Decision
+import stapl.core.NotApplicable
+
+/**
+ * The attribute finder with the hard coded attributes for the performance tests 
+ */
+class HardcodedAttributeFinderModule extends AttributeFinderModule {
+
+  override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue] = {
+    cType match {
+      case SUBJECT => name match {
+        case "roles" => Some(List("medical_personnel", "nurse"))
+        case "triggered_breaking_glass" => Some(false)
+        case "department" => Some("elder_care")
+        case "allowed_to_access_pms" => Some(true)
+        case "shift_start" => Some(new LocalDateTime(2014, 6, 24, 9, 0, 0))
+        case "shift_stop" =>Some( new LocalDateTime(2014, 6, 24, 17, 0, 0))
+        case "location" => Some("hospital")
+        case "admitted_patients_in_nurse_unit" => Some(List("patientX", "patientY"))
+        case "responsible_patients" => Some(List("patientY", "patientZ"))
+        case _ => Some("value") // for the artificial policies
+      }
+      case RESOURCE => name match {
+        case "owner_id" => Some("patientX")
+        case "owner_withdrawn_consents" => Some(List("subject1"))
+        case "type_" => Some("patientstatus")
+        case "created" => Some(new LocalDateTime(2014, 6, 22, 14, 2, 1)) // three days ago
+        case _ => Some("value") // for the artificial policies
+      }
+      case ENVIRONMENT => name match {
+        case "currentDateTime" => new Some(new LocalDateTime(2014, 6, 24, 14, 2, 1))
+        case _ => Some("value") // for the artificial policies
+      }
+      case ACTION => Some("value") // for the artificial policies
+    }
+  }
+}
 
 object EvaluationTest extends App {
+  
+  val policyHome = args(0)
 
   import EhealthPolicy._
 
-  def evaluateNurseRequest(pdp: PDP): Result = {
-    pdp.evaluate("maarten", "view", "doc123",
-      subject.roles -> List("medical_personnel", "nurse"),
-      subject.triggered_breaking_glass -> false,
-      subject.department -> "elder_care",
-      subject.allowed_to_access_pms -> true,
-      subject.shift_start -> new LocalDateTime(2014, 6, 24, 9, 0, 0),
-      subject.shift_stop -> new LocalDateTime(2014, 6, 24, 17, 0, 0),
-      subject.location -> "hospital",
-      subject.admitted_patients_in_nurse_unit -> List("patientX", "patientY"),
-      subject.responsible_patients -> List("patientY", "patientZ"),
-      resource.owner_id -> "patientX",
-      resource.owner_withdrawn_consents -> List("subject1"),
-      resource.type_ -> "patientstatus",
-      resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-      env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
-  }
-
-  def runTests(label: String, policy: AbstractPolicy, nbRuns: Int = 1000) = {
+  def runTests(label: String, policy: AbstractPolicy, expected: Decision, nbRuns: Int = 10000, nbEvaluationsPerRun: Int = 1000) = {
     println("================================================")
     println(f"Starting test $label ($nbRuns%d runs)")
     println("================================================")
 
-    val pdp = new PDP(policy, new AttributeFinder)
+    val finder = new AttributeFinder
+    finder += new HardcodedAttributeFinderModule
+    val pdp = new PDP(policy, finder)
 
     val timer = new Timer
 
     // then run the tests
     for (n <- 0 until nbRuns) {
       timer.time {
-        for (n <- 0 until 1000) {
-          val result = evaluateNurseRequest(pdp)
-          if (result.decision != Deny) {
+        for (n <- 0 until nbEvaluationsPerRun) {
+          val result = pdp.evaluate("maarten", "view", "doc123")
+          if (result.decision != expected) {
             throw new RuntimeException("The policy did not evaluate correctly!")
           }
         }
       }
     }
 
-    println(f"Mean evaluation time of 1000 evaluations: ${timer.mean}%1.2f ms (stdDev: ${timer.stdDev}%1.2f, confInt: ${timer.confInt()}%1.2f)")
+    println(f"Mean evaluation time of 1000 evaluations: ${timer.mean}%1.6f ms (stdDev: ${timer.stdDev}%1.6f, confInt: ${timer.confInt() * 100}%1.2f%%)")
+    println
   }
+  
+  // warmup
+  runTests("Warmup", naturalPolicy, Deny)
 
-  runTests("Natural policy", naturalPolicy)
-  runTests("Java-like policy", javaLikePolicy)
+  // first test the realistic ehealth policy
+  runTests("Natural policy", naturalPolicy, Deny)
+  runTests("Java-like policy", javaLikePolicy, Deny)
+  
+  // then test the artificial policies
+  var a = 0
+  for (a <- 1 until 200) {
+    subject.set("attribute" + a, SimpleAttribute(String))
+  }
+  val parser = new PolicyParser  
+  val policySizes = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
+  val policyFiles = policySizes.map(x => (x, policyHome + "/large-policy-l1-p" + x + "-a20.stapl"))
+  for((size, policyFile) <- policyFiles) {
+    val p = parser.parseFile(policyFile)
+    runTests(f"Large policy: $size%d rules", p, NotApplicable)
+  }
+  
+//  val p = parser.parseFile(policyHome + "/large-policy-l1-p5-a20.stapl")
+//  runTests("Correctness test", p, NotApplicable, 1, 1)
 
 }

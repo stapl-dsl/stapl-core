@@ -11,6 +11,7 @@ import stapl.core.pdp.AttributeFinder
 import org.joda.time.LocalDateTime
 import stapl.core.Deny
 import grizzled.slf4j.Logger
+import stapl.core.parser.PolicyParser
 
 object Attributes {
   import stapl.core._
@@ -45,34 +46,6 @@ object Attributes {
   subject.admitted_patients_in_nurse_unit = ListAttribute(String)
   subject.allowed_to_access_pms = SimpleAttribute(Bool)
   subject.responsible_patients = ListAttribute(String)
-}
-
-class PolicyParser {
-  val settings = new Settings
-  settings.usejavacp.value = true
-  settings.nowarnings.value = true
-  val interpreter = new IMain(settings)
-  interpreter.beQuietDuring({
-    interpreter.addImports(
-      "stapl.core.{subject => _, resource => _, action => _, _}",
-      "stapl.core.templates._",
-      "stapl.core.tests.performance.Attributes._")
-  })
-
-  def parse(policyString: String): AbstractPolicy = {
-    val completePolicy = s"val policy = $policyString"
-    interpreter.beQuietDuring({
-      interpreter.interpret(completePolicy)
-    })
-
-    val somePolicy = interpreter.valueOfTerm("policy")
-
-    somePolicy match {
-      case None => throw new RuntimeException("Could not load policy from given policyString (returned None)")
-      case Some(policy: AbstractPolicy) => policy
-      case _ => throw new RuntimeException("Could not load policy from given policyString (result was not an AbstractPolicy)")
-    }
-  }
 }
 
 object LoadingTest extends App {

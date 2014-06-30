@@ -31,20 +31,27 @@ class AttributeContainer private(cType: AttributeContainerType, attributes: Map[
   // import the type alias for uninitialized attributes
   import AttributeConstruction.UninitializedAttribute
   
-  final def selectDynamic(name: String): Attribute =
-    try attributes(name)
-    catch {
-      case _: NoSuchElementException => throw new AttributeDoesNotExistException(name)
-    }
-  
-  final def updateDynamic(name: String)(attribute: UninitializedAttribute){
+  final def set(name: String, attribute: UninitializedAttribute) {
     val (optionName, attributeConstructor) = attribute
     val actualAttribute = optionName match {
       case Some(someName) => attributeConstructor(cType, someName)
       case None => attributeConstructor(cType, name)
     }
     attributes += name -> actualAttribute
-    refinements.foreach(_.updateDynamic(name)(attribute))
+    refinements.foreach(_.updateDynamic(name)(attribute))    
+  }
+  
+  final def get(name: String): Attribute = {
+    try attributes(name)
+    catch {
+      case _: NoSuchElementException => throw new AttributeDoesNotExistException(name)
+    }    
+  }
+  
+  final def selectDynamic(name: String): Attribute = get(name)
+  
+  final def updateDynamic(name: String)(attribute: UninitializedAttribute){
+    set(name, attribute)
   }
   
   private val refinements = Buffer.empty[AttributeContainer]
