@@ -121,7 +121,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3")) === 
           Result(Permit,List(
               log(subject.id + " performed breaking-the-glass procedure"),
-              log("just another log on Permit")
+              log("permit because of breaking-the-glass procedure")
           )))
   }
 
@@ -154,8 +154,8 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.type_ -> "patientstatus",
         resource.owner_withdrawn_consents -> List("subject1","subject2","subject3","maarten")) === 
           Result(Permit,List(
-              log(subject.id + " performed breaking-the-glass procedure"),
-              log("just another log on Permit")
+              log(subject.id + " performed breaking-the-glass procedure"), // TODO subject.id should be evaluated to a value
+              log("permit because of breaking-the-glass procedure")
           )))
   }
   

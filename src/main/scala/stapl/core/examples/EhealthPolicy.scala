@@ -22,13 +22,8 @@ package stapl.core.examples
 import stapl.core._
 import stapl.core.templates._
 
-object EhealthPolicy {
-
-  val subject = stapl.core.subject // FIXME do we work on the single subject object here? we need a local copy of some sort
-  val resource = stapl.core.resource
-  val action = stapl.core.action
-  val env = stapl.core.environment
-
+object EhealthPolicy extends BasicPolicy {
+  
   env.currentDateTime = SimpleAttribute(DateTime)
   resource.type_ = SimpleAttribute(String)
   resource.owner_withdrawn_consents = ListAttribute(String)
@@ -63,7 +58,7 @@ object EhealthPolicy {
     PolicySet("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
         Policy("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
         Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure"))
-    ) performing (log("just another log on Permit") on Permit),
+    ) performing (log("permit because of breaking-the-glass procedure") on Permit),
     
     // Only physicians, nurses and patients can access the monitoring system.
     Policy("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),
