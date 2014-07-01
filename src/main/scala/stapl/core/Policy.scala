@@ -26,7 +26,7 @@ import stapl.core.pdp.EvaluationCtx
  * The basic constructors
  */
 abstract class AbstractPolicy(val id:String) {
-  var parent: Option[PolicySet] = None
+  var parent: Option[Policy] = None
   
   /**
    * Each element in the policy tree should only return Obligations which
@@ -55,7 +55,7 @@ abstract class AbstractPolicy(val id:String) {
   def fqid: String = treePath.reverse.mkString(">") // TODO performance optimization: cache this stuff
 }
 
-class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
+class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
     var condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
@@ -82,7 +82,7 @@ class Policy(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
   override def toString = s"Policy #$fqid"
 }
 
-class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorithm, 
+class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm, 
     val subpolicies: List[AbstractPolicy], val obligations: List[Obligation] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
@@ -138,28 +138,28 @@ class PolicySet(id: String)(val target: Expression, val pca: CombinationAlgorith
  */
 class OnlyId(private val id: String) {
   
-  def :=(t: TargetEffectConditionAndObligationActions): Policy =
-    new Policy(id)(t.target, t.effect, t.condition, List(t.obligationActions: _*))
+  def :=(t: TargetEffectConditionAndObligationActions): Rule =
+    new Rule(id)(t.target, t.effect, t.condition, List(t.obligationActions: _*))
     
-  def :=(t: TargetPCASubpoliciesAndObligations): PolicySet =
-    new PolicySet(id)(t.target, t.pca, t.subpolicies, t.obligations)
+  def :=(t: TargetPCASubpoliciesAndObligations): Policy =
+    new Policy(id)(t.target, t.pca, t.subpolicies, t.obligations)
 	
-  def :=(t: TargetEffectAndCondition): Policy =
-    new Policy(id)(t.target, t.effect, t.condition)
+  def :=(t: TargetEffectAndCondition): Rule =
+    new Rule(id)(t.target, t.effect, t.condition)
     
-  def :=(targetAndEffect: TargetAndEffect): Policy = 
-    new Policy(id)(targetAndEffect.target, targetAndEffect.effect)
+  def :=(targetAndEffect: TargetAndEffect): Rule = 
+    new Rule(id)(targetAndEffect.target, targetAndEffect.effect)
     
   def :=(onlyTarget: OnlyTarget): TargetAndId =
     new TargetAndId(id, onlyTarget.target)
  
-  def :=(effectKeyword: EffectKeyword): Policy = effectKeyword match {
-    case `deny` => new Policy(id)(AlwaysTrue, Deny)
-    case `permit` => new Policy(id)(AlwaysTrue, Permit)
+  def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
+    case `deny` => new Rule(id)(AlwaysTrue, Deny)
+    case `permit` => new Rule(id)(AlwaysTrue, Permit)
   }
   
-  def :=(t: TargetPCAAndSubpolicies): PolicySet =
-    new PolicySet(id)(t.target, t.pca, List(t.subpolicies: _*))
+  def :=(t: TargetPCAAndSubpolicies): Policy =
+    new Policy(id)(t.target, t.pca, List(t.subpolicies: _*))
     
 }
 
@@ -200,11 +200,11 @@ case object permit extends EffectKeyword {
 }
 class TargetAndId(val id: String, val target: Expression) {
   
-  def permit: Policy =
-    new Policy(id)(target, Permit)
+  def permit: Rule =
+    new Rule(id)(target, Permit)
   
-  def deny: Policy =
-    new Policy(id)(target, Deny)
+  def deny: Rule =
+    new Rule(id)(target, Deny)
 }
 
 class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) {
@@ -262,11 +262,11 @@ object iff {
   def apply(condition: Expression): Expression =
     condition
 }
-object Policy { // not really a companion object of Policy, but the start of the natural DSL for policies
+object Rule { // not really a companion object of Policy, but the start of the natural DSL for policies
   def apply(id: String) =
     new OnlyId(id)
 }
-object PolicySet {
+object Policy {
   def apply(id: String) =
     new OnlyId(id)
 }

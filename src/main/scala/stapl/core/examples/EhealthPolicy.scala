@@ -53,23 +53,23 @@ object EhealthPolicy extends BasicPolicy {
   subject.responsible_patients = ListAttribute(String)
 
   // The policy set for "view patient status".
-  val naturalPolicy = PolicySet("jisa13-final3") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
+  val naturalPolicy = Policy("jisa13-final3") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
     // The consent policy.
-    PolicySet("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
-        Policy("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
-        Policy("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure"))
+    Policy("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
+        Rule("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
+        Rule("breaking-glass") := permit iff (subject.triggered_breaking_glass) performing (log(subject.id + " performed breaking-the-glass procedure"))
     ) performing (log("permit because of breaking-the-glass procedure") on Permit),
     
     // Only physicians, nurses and patients can access the monitoring system.
-    Policy("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),
+    Rule("policy:2") := deny iff !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles)),
     
     // For physicians.
-    PolicySet("policyset:2") := when ("physician" in subject.roles) apply FirstApplicable to (      
+    Policy("policyset:2") := when ("physician" in subject.roles) apply FirstApplicable to (      
       // Of the physicians, only gps, physicians of the cardiology department, physicians of the elder care department and physicians of the emergency department can access the monitoring system.
-      Policy("policy:3") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles)),
+      Rule("policy:3") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles)),
       
       // All of the previous physicians can access the monitoring system in case of emergency.
-      Policy("policy:4") := when ((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
+      Rule("policy:4") := when ((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"))
         permit iff (subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency),
       
       // For GPs: only permit if in consultation or treated in the last six months or primary physician or responsible in the system.
@@ -82,14 +82,14 @@ object EhealthPolicy extends BasicPolicy {
       ),
       
       // For cardiologists.
-      PolicySet("policyset:4") := when (subject.department === "cardiology") apply PermitOverrides to (        
+      Policy("policyset:4") := when (subject.department === "cardiology") apply PermitOverrides to (        
         // Permit for head physician.
-        Policy("policy:7") := when (subject.is_head_physician) permit,
+        Rule("policy:7") := when (subject.is_head_physician) permit,
         
         // Permit if treated the patient or treated in team.
-        Policy("policy:8") := permit iff (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team),
+        Rule("policy:8") := permit iff (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team),
         
-        Policy("policy:9") := deny
+        Rule("policy:9") := deny
       ),
       
       // For physicians of elder care department: only permit if admitted in care unit or treated in the last six months.
@@ -107,18 +107,18 @@ object EhealthPolicy extends BasicPolicy {
     ),
     
     // For nurses.
-    PolicySet("policyset:7") := when ("nurse" in subject.roles) apply FirstApplicable to (      
+    Policy("policyset:7") := when ("nurse" in subject.roles) apply FirstApplicable to (      
       // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
-      Policy("policy:14") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care")),
+      Rule("policy:14") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care")),
       
       // Nurses can only access the PMS during their shifts.
-      Policy("policy:15") := deny iff !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
+      Rule("policy:15") := deny iff !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
       
       // Nurses can only access the PMS from the hospital.
-      Policy("policy:16") := deny iff !(subject.location === "hospital"),
+      Rule("policy:16") := deny iff !(subject.location === "hospital"),
       
       // Nurses can only view the patient's status of the last five days.
-      Policy("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
+      Rule("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
       
       // For nurses of cardiology department: they can only view the patient status of a patient 
       // in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
@@ -129,9 +129,9 @@ object EhealthPolicy extends BasicPolicy {
       ),
         
       // For nurses of the elder care department.
-      PolicySet("policyset:9") := when (subject.department === "elder_care") apply DenyOverrides to (
+      Policy("policyset:9") := when (subject.department === "elder_care") apply DenyOverrides to (
         // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
-        Policy("policy:20") := deny iff !subject.allowed_to_access_pms,
+        Rule("policy:20") := deny iff !subject.allowed_to_access_pms,
         
         // Nurses of the elder care department can only view the patient status of a patient 
         // who is currently admitted to their nurse unit and for whome they are assigned responsible.
@@ -143,32 +143,32 @@ object EhealthPolicy extends BasicPolicy {
       )
     ),
     // For patients
-    PolicySet("policyset:11") := when ("patient" in subject.roles) apply FirstApplicable to (      
+    Policy("policyset:11") := when ("patient" in subject.roles) apply FirstApplicable to (      
 	      // A patient can only access the PMS if (still) allowed by the hospital (e.g., has 
     	  // subscribed to the PMS, but is not paying any more).
-	      Policy("policy:23") := deny iff !subject.allowed_to_access_pms,
+	      Rule("policy:23") := deny iff !subject.allowed_to_access_pms,
 	      
 	      // A patient can only view his own status.
-	      Policy("policy:24") := deny iff !(resource.owner_id === subject.id),
+	      Rule("policy:24") := deny iff !(resource.owner_id === subject.id),
 	      
-	      Policy("policy:25") := permit
+	      Rule("policy:25") := permit
     )
   )
   
-  val javaLikePolicy = new PolicySet("jisa13-final3")(
+  val javaLikePolicy = new Policy("jisa13-final3")(
     target = action.id === "view" & resource.type_ === "patientstatus",
     pca = DenyOverrides,   
     subpolicies = List(
 	    // The consent policy.
-	    new PolicySet("policy:1")(
+	    new Policy("policy:1")(
 	        target = "medical_personnel" in subject.roles,
 	        pca = PermitOverrides,
 	        subpolicies = List(
-		        new Policy("consent")(
+		        new Rule("consent")(
 		            target = AlwaysTrue,
 		            effect = Deny,
 		            condition = subject.id in resource.owner_withdrawn_consents),
-		        new Policy("breaking-glass")(
+		        new Rule("breaking-glass")(
 		            target = AlwaysTrue,
 		            effect = Permit,
 		            condition = subject.triggered_breaking_glass,
@@ -180,24 +180,24 @@ object EhealthPolicy extends BasicPolicy {
 	    ),
 	    
 	    // Only physicians, nurses and patients can access the monitoring system.
-	    new Policy("policy:2")(
+	    new Rule("policy:2")(
 	        target = AlwaysTrue,
 	        effect = Deny,
 	        condition = !(("nurse" in subject.roles) | ("physician" in subject.roles) | ("patient" in subject.roles))),
 	    
 	    // For physicians.
-	    new PolicySet("policyset:2")(
+	    new Policy("policyset:2")(
 	      target = "physician" in subject.roles,
 	      pca = FirstApplicable,  
 	      subpolicies = List(
 		      // Of the physicians, only gps, physicians of the cardiology department, physicians of the elder care department and physicians of the emergency department can access the monitoring system.
-		      new Policy("policy:3")(
+		      new Rule("policy:3")(
 		        target = AlwaysTrue,
 		        effect = Deny,
 		        condition = !((subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency") | ("gp" in subject.roles))),
 		      
 		      // All of the previous physicians can access the monitoring system in case of emergency.
-		      new Policy("policy:4")(
+		      new Rule("policy:4")(
 		        target = (subject.department === "cardiology") | (subject.department === "elder_care") | (subject.department === "emergency"),
 		        effect = Permit,
 		        condition = (subject.triggered_breaking_glass | resource.operator_triggered_emergency | resource.indicates_emergency)),
@@ -212,17 +212,17 @@ object EhealthPolicy extends BasicPolicy {
 		      ),
 		      
 		      // For cardiologists.
-		      new PolicySet("policyset:4")(
+		      new Policy("policyset:4")(
 		        target = subject.department === "cardiology",
 		        pca = PermitOverrides,  
 		        subpolicies = List(
 			        // Permit for head physician.
-			        new Policy("policy:7")(
+			        new Rule("policy:7")(
 			            target = subject.is_head_physician,
 			            effect = Permit),
 			        
 			        // Permit if treated the patient or treated in team.
-			        new Policy("policy:8")(
+			        new Rule("policy:8")(
 			            target = (resource.owner_id in subject.treated) | (resource.owner_id in subject.treated_by_team),
 			            effect = Permit),
 			        
@@ -246,27 +246,27 @@ object EhealthPolicy extends BasicPolicy {
 	    ),
 	    
 	    // For nurses.
-	    new PolicySet("policyset:7")(
+	    new Policy("policyset:7")(
 	      target = "nurse" in subject.roles,
 	      pca = FirstApplicable,    
 	      subpolicies = List(
 		      // Of the nurses, only nurses of the cardiology department or the elder care department can access the PMS.
-		      new Policy("policy:14")(
+		      new Rule("policy:14")(
 		          target = !((subject.department === "cardiology") | (subject.department === "elder_care")),
 		          effect = Deny),
 		      
 		      // Nurses can only access the PMS during their shifts.
-		      new Policy("policy:15")(
+		      new Rule("policy:15")(
 		          target = !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
 		          effect = Deny),
 		      
 		      // Nurses can only access the PMS from the hospital.
-		      new Policy("policy:16")(
+		      new Rule("policy:16")(
 		          target = !(subject.location === "hospital"),
 		          effect = Deny),
 		      
 		      // Nurses can only view the patient's status of the last five days.
-		      new Policy("policy:17")(
+		      new Rule("policy:17")(
 		          target = !(env.currentDateTime lteq (resource.created + 5.days)),
 		          effect = Deny),
 		      
@@ -279,12 +279,12 @@ object EhealthPolicy extends BasicPolicy {
 		      ),
 		        
 		      // For nurses of the elder care department.
-		      new PolicySet("policyset:9")(
+		      new Policy("policyset:9")(
 		        target = subject.department === "elder_care",
 		        pca = DenyOverrides,
 		        subpolicies = List(
 			        // Of the nurses of the elder care department, only nurses who have been allowed to use the PMS can access the PMS.
-			        new Policy("policy:20")(
+			        new Rule("policy:20")(
 			            target = !subject.allowed_to_access_pms,
 			            effect = Deny),
 			        
@@ -300,18 +300,18 @@ object EhealthPolicy extends BasicPolicy {
 	      )
 	    ),
 	    // For patients
-	    new PolicySet("policyset:11")(
+	    new Policy("policyset:11")(
 	      target = "patient" in subject.roles,
 	      pca = FirstApplicable,  
 	      subpolicies = List(
 		      // A patient can only access the PMS if (still) allowed by the hospital (e.g., has 
 			  // subscribed to the PMS, but is not paying any more).
-		      new Policy("policy:23")(
+		      new Rule("policy:23")(
 		          target = !subject.allowed_to_access_pms,
 		          effect = Deny),
 		      
 		      // A patient can only view his own status.
-		      new Policy("policy:24")(
+		      new Rule("policy:24")(
 		          target = !(resource.owner_id === subject.id),
 		          effect = Deny),
 		      

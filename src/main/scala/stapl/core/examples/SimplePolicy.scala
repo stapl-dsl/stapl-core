@@ -89,22 +89,22 @@ object Example extends App {
   // or in an expression in a policy: 5.months + 3.days + 2.minutes + 20.millis
   
   val studentPolicy = 
-    new Policy("policy2")(
+    new Rule("policy2")(
         target = "student" in subject.roles,
         effect = Permit,
         condition = (subject.birthday + 18.years + 1.days) lteq env.today
     )
   
   def alwaysPermitRole(id: String, role: String) =
-    new Policy(id)(
+    new Rule(id)(
         target = role in subject.roles,
         effect = Permit
     )
   
-  val policy = PolicySet("policyset1") := when (action.id === "access" & resource.category === "book") apply FirstApplicable to (
+  val policy = Policy("policyset1") := when (action.id === "access" & resource.category === "book") apply FirstApplicable to (
       alwaysPermitRole("policy1", "teacher"),
       studentPolicy,
-      Policy("policy3") := deny
+      Rule("policy3") := deny
   )
   
   
