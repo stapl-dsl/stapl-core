@@ -55,7 +55,7 @@ class BehaviorTest extends AssertionsForJUnit {
     subject.roles = ListAttribute(String)
 
     intercept[AttributeDoesNotExistException] {
-    	Policy("p") := permit iff (subject.nonexistingAttribute === "a-value")
+    	Rule("p") := permit iff (subject.nonexistingAttribute === "a-value")
     }
   }
 

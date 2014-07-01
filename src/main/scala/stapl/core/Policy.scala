@@ -135,6 +135,9 @@ class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm,
  *  
  * Examples for policy sets:
  * 	TODO
+ *  
+ * FIXME the "policy" in this line should not be possible:
+ * 	Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
  */
 class OnlyId(private val id: String) {
   
@@ -248,6 +251,9 @@ object apply {
   
   def PermitOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies = 
     new TargetPCAAndSubpolicies(AlwaysTrue,stapl.core.PermitOverrides, subpolicies.subpolicies: _*)
+  
+  def DenyOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies = 
+    new TargetPCAAndSubpolicies(AlwaysTrue,stapl.core.DenyOverrides, subpolicies.subpolicies: _*)
 }
 class OnlySubpolicies(val subpolicies: AbstractPolicy*)
 object to {

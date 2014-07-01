@@ -61,6 +61,8 @@ trait Value {
     EqualsValue(this, that)
   }
   
+  // TODO add !==
+  
   def gt(that: Value): Expression = {
     if (this.isList || that.isList)
       throw new UnsupportedOperationException("A comparison operation is only possible between simple values.")

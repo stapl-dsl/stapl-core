@@ -65,7 +65,7 @@ object EvaluationTest extends App {
 
   def runTests(label: String, policy: AbstractPolicy, expected: Decision, nbRuns: Int = 10000, nbEvaluationsPerRun: Int = 1000) = {
     println("================================================")
-    println(f"Starting test $label ($nbRuns%d runs)")
+    println(f"Starting test $label ($nbRuns%d runs, $nbEvaluationsPerRun%d evaluations per run)")
     println("================================================")
 
     val finder = new AttributeFinder
@@ -87,6 +87,7 @@ object EvaluationTest extends App {
     }
 
     println(f"Mean evaluation time of 1000 evaluations: ${timer.mean}%1.6f ms (stdDev: ${timer.stdDev}%1.6f, confInt: ${timer.confInt() * 100}%1.2f%%)")
+    println(f"=> Mean evaluation time per evaluation: ${timer.mean}%1.3f microseconds")
     println
   }
   
@@ -103,7 +104,7 @@ object EvaluationTest extends App {
     subject.set("attribute" + a, SimpleAttribute(String))
   }
   val parser = new PolicyParser  
-  val policySizes = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
+  val policySizes = List(1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
   val policyFiles = policySizes.map(x => (x, policyHome + "/large-policy-l1-p" + x + "-a20.stapl"))
   for((size, policyFile) <- policyFiles) {
     val p = parser.parseFile(policyFile)
