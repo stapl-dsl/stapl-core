@@ -18,14 +18,14 @@ object EdocsPolicy extends BasicPolicy {
   subject.tenant 							= SimpleAttribute(String)
   subject.tenant_credit_sufficient 			= SimpleAttribute(Bool)
   subject.tenant_name 						= ListAttribute(String)
-  subject.tenant_type 						= SimpleAttribute(String)
+  subject.tenant_type 						= ListAttribute(String)
   resource.confidential 					= SimpleAttribute(Bool)
   resource.contains_personal_information	= SimpleAttribute(Bool)
   resource.creating_tenant_name 			= SimpleAttribute(String)
   resource.delegated_view 					= ListAttribute(String)
   resource.destination 						= SimpleAttribute(String)
   resource.destination_customer_type 		= SimpleAttribute(String)
-  resource.destination_department 			= ListAttribute(String)
+  resource.destination_department 			= SimpleAttribute(String)
   resource.destination_office 				= SimpleAttribute(String)
   resource.destination_owns_savings_account = SimpleAttribute(Bool)
   resource.origin 							= SimpleAttribute(String)
@@ -35,11 +35,11 @@ object EdocsPolicy extends BasicPolicy {
   resource.type_ 							= SimpleAttribute(String)
   env.current_date_between_20_and_25 		= SimpleAttribute(Bool) 	// Note: we did not want to model this in XACML in full 
   env.current_time_between_7_and_19 		= SimpleAttribute(Bool)	 	// because of the difficulty of writing this, but we could do this easily
-  															 			// in STAPL! However, for honest comparison: leave it this way.
+  env.dateTimeOk							= SimpleAttribute(Bool)		// in STAPL! However, for honest comparison: leave it this way.
   
   val policy = Policy("edocs") := apply DenyOverrides to (
       // For members of the provider
-      Policy("members-of-provider") := when (subject.tenant_name === "provider") apply FirstApplicable to (
+      Policy("members-of-provider") := when ("provider" in subject.tenant_name) apply FirstApplicable to (
           
           // No member of the Provider can read a document labeled confidential.
           Rule("confidential") := when (action.id === "view" & resource.type_ === "document") deny iff (resource.confidential),
@@ -107,7 +107,7 @@ object EdocsPolicy extends BasicPolicy {
       ),
       
       // For tenants in general
-      Policy("tenants") := when (subject.tenant_type === "tenant") apply DenyOverrides to (
+      Policy("tenants") := when ("tenant" in subject.tenant_type) apply DenyOverrides to (
           
           // A member of a Tenant can only send a document if the credit of that tenant is sufficient.
           Rule("credit") := when (action.id === "send" & resource.type_ === "document") deny iff (! subject.tenant_credit_sufficient),
@@ -118,7 +118,7 @@ object EdocsPolicy extends BasicPolicy {
       
       // For specific tenants
       // For Large Bank
-      Policy("large-bank") := when (subject.tenant_name === "large-bank") apply DenyOverrides to (
+      Policy("large-bank") := when ("large-bank" in subject.tenant_name) apply DenyOverrides to (
           
           // For general documents
           Policy("documents") := when (resource.type_ === "document") apply DenyOverrides to (
@@ -127,13 +127,13 @@ object EdocsPolicy extends BasicPolicy {
               Policy("send") := when (action.id === "send") apply DenyOverrides to (
                   
                   // Members of a subtenant can only send documents to customers of that subtenant.
-                  Rule("only to own subtenant") := when (subject.tenant_type === "subtenant") deny iff (! (resource.owning_tenant in subject.customers_of_direct_tenant)),
+                  Rule("only to own subtenant") := when ("subtenant" in subject.tenant_type) deny iff (! (resource.owning_tenant in subject.customers_of_direct_tenant)),
                   
                   // Members of a bank office can only send documents to external customers whose main office is that bank office.
-                  Rule("bank office") := when (subject.tenant_type === "bank_office") deny iff (! (resource.owning_tenant in subject.customers_of_bank_office)),
+                  Rule("bank office") := when ("bank_office" in subject.tenant_type) deny iff (! (resource.owning_tenant in subject.customers_of_bank_office)),
                   
                   // Refinement of the previous rule: Insurance agents of a bank office can only send documents to insurance customers of that bank office.
-                  Rule("insurance agents") := when ((subject.tenant_type === "bank_office") & ("insurance-agent" in subject.role)) deny iff (! (resource.destination_customer_type === "insurance")),
+                  Rule("insurance agents") := when (("bank_office" in subject.tenant_type) & ("insurance-agent" in subject.role)) deny iff (! (resource.destination_customer_type === "insurance")),
                   
                   defaultPermit
               ),
@@ -227,10 +227,92 @@ object EdocsPolicy extends BasicPolicy {
                   
                   defaultDeny
               )              
-          )
+          ),
           
           // For sales offers
-          // TODO HIER VERDER GAAN
+          Policy("sales-offers") := when (resource.type_ === "sales_offer") apply DenyOverrides to (
+              
+              // For sending sales offers
+              Policy("send") := when (action.id === "send") apply DenyOverrides to (
+                  
+                  // Only members of the sales department can send sales offers
+                  Rule("only-sales-dpt") := deny iff (! (subject.department === "sales")),
+                  
+                  // Sales offers regarding insurances can only be sent to insurance customers.
+                  Rule("insurances") := deny iff (! (resource.destination_customer_type === "insurance")),
+                  
+                  // Sales offers regarding savings accounts can only be sent to customers who own a savings account.
+                  Rule("savings-account") := deny iff (! resource.destination_owns_savings_account),
+                  
+                  // Sales offers can only be sent between 7am and 7pm.
+                  Rule("time") := deny iff (! environment.current_time_between_7_and_19),
+                  
+                  defaultPermit
+              ),
+              
+              // For sending sales offers to all customers at once
+              Policy("send-to-all") := when (action.id === "send_to_all_customers") apply DenyOverrides to (
+                  
+                  // Only senior members of the sales department can send sales offers.
+                  Rule("only-senior") := deny iff (! ((subject.department === "sales") & ("senior" in subject.role))),
+                      
+                  defaultPermit
+              )              
+          ),
+          
+          // For internal communication with local bank offices
+          Policy("local-bank-offices") := when (resource.type_ === "bank_office_communication") apply DenyOverrides to (
+              
+              // For sending to a single bank office
+              Policy("send-to-single") := when (action.id === "send") apply DenyOverrides to (
+                  
+                  // Only bank office managers can send sales offers and only to offices which they are responsible for.
+                  Rule("only") := deny iff (! (("bank_office_manager" in subject.role) & (resource.destination_office in subject.assigned_offices))),
+                  
+                  defaultPermit
+              ),
+              
+              // For sending to all bank offices at once
+              Policy("send-to-all") := when (action.id === "send_to_all_offices") apply DenyOverrides to (
+                  
+                  // Only senior bank office managers can send sales offers.
+                  Rule("senior-office-managers") := deny iff (! (("senior" in subject.role) & ("bank_office_manager" in subject.role))),
+                  
+                  defaultPermit
+              )
+          ),
+          
+          // For creating users
+          Policy("creating-users") := when (action.id === "create" & resource.type_ === "user") apply DenyOverrides to (
+              
+              // Only members of the HR department can create users.
+              Rule("HR") := deny iff (! (subject.department === "HR")),
+              
+              // Users can only be created on weekdays between 7am and 7pm. Simplification: avoid the date operations by using the "date-ok" attribute.
+              Rule("weekdays") := deny iff (! env.dateTimeOk),
+              
+              defaultPermit
+          ),
+          
+          // For creating subtenants
+          Policy("creating-subtenants") := when (action.id === "create" & resource.type_ === "subtenant") apply DenyOverrides to (
+              
+              // Only members of the IT department which are part of senior management can create subtenants.
+              Rule("IT") := deny iff (! ((subject.department === "IT") & ("senior" in subject.role))),
+                  
+              defaultPermit
+          ),
+          
+          // For members of local bank offices
+          Policy("local-bank-office") := when ("local-bank-office" in subject.tenant_type) apply DenyOverrides to (
+              
+              // Only the secretary and the office director of a bank office can read documents sent to the bank office.
+              Rule("only") := when ((action.id === "view") & (resource.type_ === "bank_office_communication")) deny iff (
+                  ! ((("secretary" in subject.role) | ("office_director" in subject.role)) & (resource.owning_tenant === subject.tenant))
+              ),
+              
+              defaultPermit
+          )
       )
   )
 }
