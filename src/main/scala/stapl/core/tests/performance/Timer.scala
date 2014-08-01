@@ -11,7 +11,7 @@ class Timer {
     val t0 = System.nanoTime()
     val result = block // call-by-name
     val t1 = System.nanoTime()
-    timings ::= (t1 - t0) / 1000000
+    timings ::= (t1.toDouble - t0.toDouble) / 1000000.0
     result
   }
   

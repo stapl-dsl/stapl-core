@@ -66,7 +66,7 @@ object EvaluationTest extends App {
   import EhealthPolicy._
   
   // warmup
-  runTests("Warmup", naturalPolicy, Deny)
+  //runTests("Warmup", naturalPolicy, Deny)
 
   // first test the realistic ehealth policy
   runTests("E-health", naturalPolicy, Deny, nbRuns, nbEvaluationsPerRun)
@@ -113,8 +113,9 @@ object EvaluationTest extends App {
       }
     }
 
-    println(f"Mean evaluation time of 1000 evaluations: ${timer.mean}%1.6f ms (stdDev: ${timer.stdDev}%1.6f, confInt: ${timer.confInt() * 100}%1.2f%%)")
-    println(f"=> Mean evaluation time per evaluation: ${timer.mean}%1.3f microseconds")
+    println(f"Mean evaluation time of $nbEvaluationsPerRun evaluations: ${timer.mean}%1.6f ms (stdDev: ${timer.stdDev}%1.6f, confInt: ${timer.confInt() * 100}%1.2f%%)")
+    println(f"=> Mean evaluation time per evaluation: ${timer.mean * 1000.0 / nbEvaluationsPerRun}%1.3f microseconds")
+    println(timer.timings)
     println
   }
 
