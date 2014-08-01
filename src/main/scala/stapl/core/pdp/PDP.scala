@@ -35,7 +35,7 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
     resourceId: String, extraAttributes: (Attribute,ConcreteValue)*): Result =
       evaluate(new RequestCtx(subjectId, actionId, resourceId, extraAttributes: _*))
   
-  def evaluate(ctx: RequestCtx): Result = policy.evaluate(new BasicEvaluationCtx(ctx, attributeFinder))
+  def evaluate(ctx: RequestCtx): Result = evaluate(new BasicEvaluationCtx(ctx, attributeFinder))
   
   def evaluate(ctx: EvaluationCtx): Result = policy.evaluate(ctx)
 }
