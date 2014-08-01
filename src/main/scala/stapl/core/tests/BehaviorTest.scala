@@ -52,8 +52,6 @@ class BehaviorTest extends AssertionsForJUnit {
     val action = stapl.core.action
     val env = stapl.core.environment
 
-    subject.roles = ListAttribute(String)
-
     intercept[AttributeDoesNotExistException] {
     	Rule("p") := permit iff (subject.nonexistingAttribute === "a-value")
     }

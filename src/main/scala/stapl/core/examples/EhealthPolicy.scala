@@ -53,7 +53,7 @@ object EhealthPolicy extends BasicPolicy {
   subject.responsible_patients = ListAttribute(String)
 
   // The policy set for "view patient status".
-  val naturalPolicy = Policy("jisa13-final3") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
+  val naturalPolicy = Policy("ehealth") := when (action.id === "view" & resource.type_ === "patientstatus") apply DenyOverrides to (    
     // The consent policy.
     Policy("policy:1") := when ("medical_personnel" in subject.roles) apply PermitOverrides to (
         Rule("consent") := deny iff (subject.id in resource.owner_withdrawn_consents),
@@ -155,7 +155,7 @@ object EhealthPolicy extends BasicPolicy {
     )
   )
   
-  val javaLikePolicy = new Policy("jisa13-final3")(
+  val javaLikePolicy = new Policy("ehealth")(
     target = action.id === "view" & resource.type_ === "patientstatus",
     pca = DenyOverrides,   
     subpolicies = List(

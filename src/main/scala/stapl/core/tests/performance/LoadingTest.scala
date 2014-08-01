@@ -12,48 +12,73 @@ import org.joda.time.LocalDateTime
 import stapl.core.Deny
 import grizzled.slf4j.Logger
 import stapl.core.parser.PolicyParser
+import stapl.core.Decision
+import stapl.core.examples.EhealthPolicy
+import stapl.core.SimpleAttribute
+import stapl.core.String
+import stapl.core.NotApplicable
+import stapl.core.pdp.AttributeFinderModule
+import stapl.core.pdp.EvaluationCtx
+import stapl.core.AttributeContainerType
+import stapl.core.AttributeType
+import stapl.core.ConcreteValue
 
 object Attributes {
-  import stapl.core._
-  val subject = stapl.core.subject // FIXME do we work on the single subject object here? we need a local copy of some sort
-  val resource = stapl.core.resource
-  val action = stapl.core.action
-  val env = stapl.core.environment
-  env.currentDateTime = SimpleAttribute(DateTime)
-  resource.type_ = SimpleAttribute(String)
-  resource.owner_withdrawn_consents = ListAttribute(String)
-  resource.operator_triggered_emergency = SimpleAttribute(Bool)
-  resource.indicates_emergency = SimpleAttribute(Bool)
-  resource.owner_id = SimpleAttribute("owner:id", String)
-  resource.owner_responsible_physicians = ListAttribute("owner:responsible_physicians", String)
-  resource.owner_discharged = SimpleAttribute("owner:discharged", Bool)
-  resource.owner_discharged_dateTime = SimpleAttribute("owner:discharged_dateTime", DateTime)
-  resource.patient_status = SimpleAttribute(String)
-  resource.created = SimpleAttribute(DateTime)
-  subject.roles = ListAttribute(String)
-  subject.triggered_breaking_glass = SimpleAttribute(Bool)
-  subject.department = SimpleAttribute(String)
-  subject.current_patient_in_consultation = SimpleAttribute(String)
-  subject.treated_in_last_six_months = ListAttribute(String)
-  subject.primary_patients = ListAttribute(String)
-  subject.is_head_physician = SimpleAttribute(Bool)
-  subject.treated = ListAttribute(String)
-  subject.treated_by_team = ListAttribute(String)
-  subject.admitted_patients_in_care_unit = ListAttribute(String)
-  subject.shift_start = SimpleAttribute(DateTime)
-  subject.shift_stop = SimpleAttribute(DateTime)
-  subject.location = SimpleAttribute(String)
-  subject.admitted_patients_in_nurse_unit = ListAttribute(String)
-  subject.allowed_to_access_pms = SimpleAttribute(Bool)
-  subject.responsible_patients = ListAttribute(String)
+  val subject = EhealthPolicy.subject
+  val resource = EhealthPolicy.resource
+  val action = EhealthPolicy.action
+  val env = EhealthPolicy.env
+  var a = 0
+  for (a <- 1 until 200) {
+    subject.set("attribute" + a, SimpleAttribute(String))
+  }  
+}
+
+/**
+ * An attribute finder module for the artificial attribute1, attribute2, ... attributes.
+ * Just returns "rubbish" for every attribute request, so that the artifical policies will
+ * never apply.
+ */
+class ArtificialAttributeFinderModule extends AttributeFinderModule {
+  
+  /**
+   * 
+   */
+  override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType) = {
+    if(name.startsWith("attribute")) {
+      Some("rubbish")
+    } else {
+      None
+    }
+  }
 }
 
 object LoadingTest extends App {
+  
+  val policyHome = args(0)
+  val nbRuns = args(1).toInt
 
-  def testPolicy(policy: AbstractPolicy) = {
+  // test the policies from the case studies
+  test("E-health", policyHome + "/ehealth.stapl", Deny, nbRuns)
+  
+  // then test the artificial policies
+  import Attributes._
+  val parser = new PolicyParser  
+  val policySizes = List(1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
+  for(size <- policySizes) {
+	  test(f"Large policy: $size%d rules", policyHome + "/large-policy-l1-p" + size + "-a20.stapl", NotApplicable, nbRuns)
+  }
+  
+  
+  
+
+  def testPolicy(policy: AbstractPolicy, decision: Decision) = {
     import Attributes._
 
-    val pdp = new PDP(policy, new AttributeFinder)
+    val attributeFinder = new AttributeFinder
+    attributeFinder += new ArtificialAttributeFinderModule
+    
+    val pdp = new PDP(policy, attributeFinder)
     val result = pdp.evaluate("maarten", "view", "doc123",
       subject.roles -> List("medical_personnel", "nurse"),
       subject.triggered_breaking_glass -> false,
@@ -69,7 +94,7 @@ object LoadingTest extends App {
       resource.type_ -> "patientstatus",
       resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
       env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
-    if (result.decision != Deny) {
+    if (result.decision != decision) {
       throw new RuntimeException("The policy did not evaluate correctly!")
     }
   }
@@ -81,7 +106,7 @@ object LoadingTest extends App {
     policyString
   }
 
-  def test(label: String, path: String, nbRuns: Int = 1000) = {    
+  def test(label: String, path: String, decision: Decision, nbRuns: Int = 1000) = {    
     println("================================================")
     println(f"Starting test $label ($nbRuns%d runs)")
     println("================================================")
@@ -95,7 +120,7 @@ object LoadingTest extends App {
     // TODO programatically disable log output on stdout 
     val policy = time { parse(policyString) }
 
-    testPolicy(policy)
+    testPolicy(policy, decision)
 
     println(s"Initial loading time = ${timer.mean} ms")
 
@@ -108,7 +133,4 @@ object LoadingTest extends App {
     //println(s"Timings: ${timer.timings.reverse}")
 
   }
-
-  test("Natural policy", "/home/maartend/PhD/code/workspace-scala/stapl-core/resources/policies/ehealth-natural.stapl")
-  test("Java-style policy", "/home/maartend/PhD/code/workspace-scala/stapl-core/resources/policies/ehealth.stapl")
 }

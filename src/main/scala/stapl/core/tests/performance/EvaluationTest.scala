@@ -60,8 +60,35 @@ class HardcodedAttributeFinderModule extends AttributeFinderModule {
 object EvaluationTest extends App {
   
   val policyHome = args(0)
+  val nbRuns = args(1).toInt
+  val nbEvaluationsPerRun = args(2).toInt
 
   import EhealthPolicy._
+  
+  // warmup
+  runTests("Warmup", naturalPolicy, Deny)
+
+  // first test the realistic ehealth policy
+  runTests("E-health", naturalPolicy, Deny, nbRuns, nbEvaluationsPerRun)
+  //runTests("Java-like policy", javaLikePolicy, Deny, nbRuns, nbEvaluationsPerRun)
+  
+  // then test the artificial policies
+  var a = 0
+  for (a <- 1 until 200) {
+    subject.set("attribute" + a, SimpleAttribute(String))
+  }
+  val parser = new PolicyParser  
+  val policySizes = List(1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
+  val policyFiles = policySizes.map(x => (x, policyHome + "/large-policy-l1-p" + x + "-a20.stapl"))
+  for((size, policyFile) <- policyFiles) {
+    val p = parser.parseFile(policyFile)
+    runTests(f"Large policy: $size%d rules", p, NotApplicable, nbRuns, nbEvaluationsPerRun)
+  }
+  
+//  val p = parser.parseFile(policyHome + "/large-policy-l1-p5-a20.stapl")
+//  runTests("Correctness test", p, NotApplicable, 1, 1)
+  
+  
 
   def runTests(label: String, policy: AbstractPolicy, expected: Decision, nbRuns: Int = 10000, nbEvaluationsPerRun: Int = 1000) = {
     println("================================================")
@@ -90,28 +117,5 @@ object EvaluationTest extends App {
     println(f"=> Mean evaluation time per evaluation: ${timer.mean}%1.3f microseconds")
     println
   }
-  
-  // warmup
-  runTests("Warmup", naturalPolicy, Deny)
-
-  // first test the realistic ehealth policy
-  runTests("Natural policy", naturalPolicy, Deny)
-  runTests("Java-like policy", javaLikePolicy, Deny)
-  
-  // then test the artificial policies
-  var a = 0
-  for (a <- 1 until 200) {
-    subject.set("attribute" + a, SimpleAttribute(String))
-  }
-  val parser = new PolicyParser  
-  val policySizes = List(1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
-  val policyFiles = policySizes.map(x => (x, policyHome + "/large-policy-l1-p" + x + "-a20.stapl"))
-  for((size, policyFile) <- policyFiles) {
-    val p = parser.parseFile(policyFile)
-    runTests(f"Large policy: $size%d rules", p, NotApplicable)
-  }
-  
-//  val p = parser.parseFile(policyHome + "/large-policy-l1-p5-a20.stapl")
-//  runTests("Correctness test", p, NotApplicable, 1, 1)
 
 }
