@@ -12,9 +12,14 @@ class PolicyParser {
   interpreter.beQuietDuring({
     interpreter.addImports(
       "stapl.core.{subject => _, resource => _, action => _, _}",
-      "stapl.core.templates._",
-      "stapl.core.tests.performance.Attributes._")
+      "stapl.core.templates._")
   })
+  
+  def addImport(i: String) = {
+    interpreter.beQuietDuring({
+      interpreter.addImports(i)
+    })
+  }
 
   def parse(policyString: String): AbstractPolicy = {
     val completePolicy = s"val policy = $policyString"

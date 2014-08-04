@@ -22,16 +22,29 @@ import stapl.core.pdp.EvaluationCtx
 import stapl.core.AttributeContainerType
 import stapl.core.AttributeType
 import stapl.core.ConcreteValue
+import stapl.core.examples.EdocsPolicy
 
-object Attributes {
+object EhealthAttributes {
   val subject = EhealthPolicy.subject
   val resource = EhealthPolicy.resource
   val action = EhealthPolicy.action
   val env = EhealthPolicy.env
+}
+object EdocsAttributes {  
+  val subject = EdocsPolicy.subject
+  val resource = EdocsPolicy.resource
+  val action = EdocsPolicy.action
+  val env = EdocsPolicy.env
+}
+object ArtificialAttributes {
+  val subject = stapl.core.subject
+  val resource = stapl.core.resource
+  val action = stapl.core.action
+  val env = stapl.core.environment
   var a = 0
   for (a <- 1 until 200) {
     subject.set("attribute" + a, SimpleAttribute(String))
-  }  
+  }
 }
 
 /**
@@ -40,12 +53,12 @@ object Attributes {
  * never apply.
  */
 class ArtificialAttributeFinderModule extends AttributeFinderModule {
-  
+
   /**
-   * 
+   *
    */
   override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType) = {
-    if(name.startsWith("attribute")) {
+    if (name.startsWith("attribute")) {
       Some("rubbish")
     } else {
       None
@@ -54,30 +67,33 @@ class ArtificialAttributeFinderModule extends AttributeFinderModule {
 }
 
 object LoadingTest extends App {
-  
-  val policyHome = args(0)
-  val nbRuns = args(1).toInt
 
-  // test the policies from the case studies
-  test("E-health", policyHome + "/ehealth.stapl", Deny, nbRuns)
-  
-  // then test the artificial policies
-  import Attributes._
-  val parser = new PolicyParser  
   val policySizes = List(1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200)
-  for(size <- policySizes) {
-	  test(f"Large policy: $size%d rules", policyHome + "/large-policy-l1-p" + size + "-a20.stapl", NotApplicable, nbRuns)
-  }
-  
-  
-  
 
-  def testPolicy(policy: AbstractPolicy, decision: Decision) = {
-    import Attributes._
+  val policyHome = args(0)
+  val policyName = args(1)
+  val nbRuns = args(2).toInt
+
+  if (policyName == "ehealth") {
+    test("E-health", policyHome + "/ehealth.stapl", "stapl.core.tests.performance.EhealthAttributes._", testEhealthPolicy, nbRuns)
+  } else if (policyName == "edocs") {
+    test("E-docs", policyHome + "/edocs.stapl", "stapl.core.tests.performance.EdocsAttributes._", testEdocsPolicy, nbRuns)
+  } else {
+    val policySize = policyName.toInt
+    if (!policySizes.contains(policySize)) {
+      println("Invalid policy size given: " + policySize + " Valid policy sizes: " + policySizes)
+    } else {
+      // then test the artificial policies
+      val parser = new PolicyParser
+      test(f"Large policy: $policySize%d rules", policyHome + "/large-policy-l1-p" + policySize + "-a20.stapl", "stapl.core.tests.performance.ArtificialAttributes._", testArtificialPolicy, nbRuns)
+    }
+  }
+
+  def testEhealthPolicy(policy: AbstractPolicy) = {
+    import EhealthAttributes._
 
     val attributeFinder = new AttributeFinder
-    attributeFinder += new ArtificialAttributeFinderModule
-    
+
     val pdp = new PDP(policy, attributeFinder)
     val result = pdp.evaluate("maarten", "view", "doc123",
       subject.roles -> List("medical_personnel", "nurse"),
@@ -94,7 +110,40 @@ object LoadingTest extends App {
       resource.type_ -> "patientstatus",
       resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
       env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
-    if (result.decision != decision) {
+    if (result.decision != Deny) {
+      throw new RuntimeException("The policy did not evaluate correctly!")
+    }
+  }
+
+  def testEdocsPolicy(policy: AbstractPolicy) = {
+    import EdocsAttributes._
+
+    val attributeFinder = new AttributeFinder
+
+    val pdp = new PDP(policy, attributeFinder)
+    val result = pdp.evaluate("maarten", "create", "subtenantX",
+        subject.role -> List("junior"),
+        subject.department -> "another-department",
+        subject.tenant -> "large-bank",
+        subject.tenant_name -> List("large-bank"),
+        subject.tenant_type -> List("tenant"),
+        resource.type_ -> "subtenant",
+        resource.confidential -> false,
+        resource.owning_tenant -> "large-bank")
+    if (result.decision != Deny) {
+      throw new RuntimeException("The policy did not evaluate correctly!")
+    }
+  }
+
+  def testArtificialPolicy(policy: AbstractPolicy) = {
+    import ArtificialAttributes._
+
+    val attributeFinder = new AttributeFinder
+    attributeFinder += new ArtificialAttributeFinderModule
+
+    val pdp = new PDP(policy, attributeFinder)
+    val result = pdp.evaluate("maarten", "create", "subtenantX")
+    if (result.decision != NotApplicable) {
       throw new RuntimeException("The policy did not evaluate correctly!")
     }
   }
@@ -106,13 +155,14 @@ object LoadingTest extends App {
     policyString
   }
 
-  def test(label: String, path: String, decision: Decision, nbRuns: Int = 1000) = {    
+  def test(label: String, path: String, attribute_import: String, testPolicy: (AbstractPolicy) => Unit, nbRuns: Int = 1000) = {
     println("================================================")
     println(f"Starting test $label ($nbRuns%d runs)")
     println("================================================")
     val timer = new Timer
     import timer.time
     val parser = new PolicyParser
+    parser.addImport(attribute_import)
     import parser.parse
 
     val policyString = read(path)
@@ -120,7 +170,7 @@ object LoadingTest extends App {
     // TODO programatically disable log output on stdout 
     val policy = time { parse(policyString) }
 
-    testPolicy(policy, decision)
+    testPolicy(policy)
 
     println(s"Initial loading time = ${timer.mean} ms")
 
