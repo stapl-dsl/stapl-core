@@ -21,15 +21,17 @@ package stapl.core.pdp
 
 import stapl.core.AbstractPolicy
 import stapl.core.Attribute
-import stapl.core.pdp.AttributeFinder
-import stapl.core.pdp.BasicEvaluationCtx
 import stapl.core.ConcreteValue
-import stapl.core.pdp.EvaluationCtx
-import stapl.core.pdp.RequestCtx
 import stapl.core.Decision
 import stapl.core.Result
 
 class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
+  
+  /**
+   * Set up this new PDP with an empty attribute finder (which does not find
+   * any attributes).
+   */
+  def this(policy:AbstractPolicy) = this(policy, new AttributeFinder)
   
   def evaluate(subjectId: String, actionId: String, 
     resourceId: String, extraAttributes: (Attribute,ConcreteValue)*): Result =

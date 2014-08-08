@@ -72,12 +72,13 @@ object LoadingTest extends App {
 
   val policyHome = args(0)
   val policyName = args(1)
-  val nbRuns = args(2).toInt
+  val nbWarmups = args(2).toInt
+  val nbRuns = args(3).toInt
 
   if (policyName == "ehealth") {
-    test("E-health", policyHome + "/ehealth.stapl", "stapl.core.tests.performance.EhealthAttributes._", testEhealthPolicy, nbRuns)
+    test("ehealth", policyHome + "/ehealth.stapl", "stapl.core.tests.performance.EhealthAttributes._", testEhealthPolicy, nbWarmups, nbRuns)
   } else if (policyName == "edocs") {
-    test("E-docs", policyHome + "/edocs.stapl", "stapl.core.tests.performance.EdocsAttributes._", testEdocsPolicy, nbRuns)
+    test("edocs", policyHome + "/edocs.stapl", "stapl.core.tests.performance.EdocsAttributes._", testEdocsPolicy, nbWarmups, nbRuns)
   } else {
     val policySize = policyName.toInt
     if (!policySizes.contains(policySize)) {
@@ -85,7 +86,7 @@ object LoadingTest extends App {
     } else {
       // then test the artificial policies
       val parser = new PolicyParser
-      test(f"Large policy: $policySize%d rules", policyHome + "/large-policy-l1-p" + policySize + "-a20.stapl", "stapl.core.tests.performance.ArtificialAttributes._", testArtificialPolicy, nbRuns)
+      test(f"$policySize%d", policyHome + "/large-policy-l1-p" + policySize + "-a20.stapl", "stapl.core.tests.performance.ArtificialAttributes._", testArtificialPolicy, nbWarmups, nbRuns)
     }
   }
 
@@ -155,10 +156,7 @@ object LoadingTest extends App {
     policyString
   }
 
-  def test(label: String, path: String, attribute_import: String, testPolicy: (AbstractPolicy) => Unit, nbRuns: Int = 1000) = {
-    println("================================================")
-    println(f"Starting test $label ($nbRuns%d runs)")
-    println("================================================")
+  def test(label: String, path: String, attribute_import: String, testPolicy: (AbstractPolicy) => Unit, nbWarmups: Int, nbRuns: Int) = {
     val timer = new Timer
     import timer.time
     val parser = new PolicyParser
@@ -167,10 +165,16 @@ object LoadingTest extends App {
 
     val policyString = read(path)
 
-    // TODO programatically disable log output on stdout 
+    // TODO programatically disable log output on stdout
+    
+    // test the policy
     val policy = time { parse(policyString) }
-
     testPolicy(policy)
+    
+    // do the warmups
+    for(i <- 1 until nbWarmups) {
+      parse(policyString)
+    }
 
     println(s"Initial loading time = ${timer.mean} ms")
 
@@ -179,7 +183,8 @@ object LoadingTest extends App {
       time { parse(policyString) }
     }
 
-    println(f"Average loading time afterwards = ${timer.mean}%2.2f ms (stdDev = ${timer.stdDev}%2.2f, confInterval = ${timer.confInt() * 100}%2.2f%%)")
+    println(f"Loading - STAPL - $label - ${timer.mean}%2.2f ms ($nbWarmups warmups, $nbRuns runs)")
+    //println(f"   (details: stdDev = ${timer.stdDev}%2.2f, confInterval = ${timer.confInt() * 100}%2.2f%%)")
     //println(s"Timings: ${timer.timings.reverse}")
 
   }
