@@ -1,4 +1,4 @@
-# STAPL in brief
+# STAPL
 
 STAPL or the Simple Tree-structured Attribute-based Policy Language is a Scala DSL designed to express and evaluate XACML-like policies easily. STAPL provides a human-friendly policy syntax and an efficient evaluation engine that is easy to test and use in Scala and Java applications.
 
