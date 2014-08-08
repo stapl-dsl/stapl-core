@@ -15,7 +15,7 @@ This repository hosts `stapl-core`. Some other projects extend the core:
 
 Here is a simple example of a STAPL policy based on an e-health scenario:
 
-```
+```scala
 package mypackage
 
 import stapl.core._
