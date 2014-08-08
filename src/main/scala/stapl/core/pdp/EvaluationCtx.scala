@@ -21,10 +21,18 @@ package stapl.core.pdp
 
 import grizzled.slf4j.Logging
 import stapl.core.ConcreteValue
-import stapl.core.pdp.RequestCtx
 import stapl.core.Attribute
-import stapl.core.pdp.AttributeFinder
 
+/**
+ * The base class of the context for evaluating a policy. This context
+ * represents all information for that policy evaluation, such as the 
+ * id of the subject, the id of the resource, the id of the action and 
+ * a method to find attributes.
+ * 
+ * The method to find attributes is required in the evaluation context
+ * because certain aspects such as an attribute cache are specific for
+ * each individual evaluation context.
+ */
 trait EvaluationCtx {
   
   def subjectId: String
@@ -33,6 +41,11 @@ trait EvaluationCtx {
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
 }
 
+/**
+ * An implementation of a basic evaluation context. This evaluation context
+ * stores the subject id, the resource id, the action id and stores found
+ * attribute values in a cache for this evaluation context. 
+ */
 class BasicEvaluationCtx(request: RequestCtx, finder: AttributeFinder) extends EvaluationCtx with Logging {
   
   override val subjectId: String = request.subjectId
@@ -42,7 +55,13 @@ class BasicEvaluationCtx(request: RequestCtx, finder: AttributeFinder) extends E
   override val actionId: String = request.actionId
   
   final val cachedAttributes: scala.collection.mutable.Map[Attribute,ConcreteValue] = request.allAttributes
-                                                           
+                            
+  /**
+   * Try to find the value of the given attribute. If the value is already
+   * in the attribute cache, that value is returned. Otherwise, the attribute
+   * finder is checked and the found value is stored in the attribute cache if
+   * a value is found.
+   */
   override def findAttribute(attribute: Attribute): ConcreteValue = {
     cachedAttributes.get(attribute) match {
       case Some(value) => {

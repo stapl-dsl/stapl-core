@@ -2,6 +2,11 @@ package stapl.core.tests.performance
 
 import Numeric._
 
+/**
+ * Class used for representing a timer that times code evaluation,
+ * keeps all values of the test and provides some statistics about 
+ * these timings.
+ */
 class Timer {
   
   // timings in milliseconds

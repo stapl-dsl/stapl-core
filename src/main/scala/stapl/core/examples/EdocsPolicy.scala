@@ -3,6 +3,9 @@ package stapl.core.examples
 import stapl.core._
 import stapl.core.templates._
 
+/**
+ * Example of a policy based on an electronic document processing case study.
+ */
 object EdocsPolicy extends BasicPolicy {
   
   subject.assigned_offices 					= ListAttribute(String)

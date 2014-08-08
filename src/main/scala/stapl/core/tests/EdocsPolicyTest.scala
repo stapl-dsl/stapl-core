@@ -42,6 +42,9 @@ object EdocsPolicyTest {
     // nothing to do
   }
 }
+/**
+ * Correctness tests of the e-docs policy.
+ */
 class EdocsPolicyTest extends AssertionsForJUnit {
 
   import EdocsPolicy._

@@ -1,5 +1,12 @@
 package stapl.core
 
+/**
+ * A simple base class to extend from and start writing policies. 
+ * Extending this class imports subject, resource, action and env into 
+ * your scope, avoiding writing this boiler plat code yourself.
+ * 
+ * Example: see staple.core.examples.PolicyFromReadMe 
+ */
 trait BasicPolicy extends DelayedInit {
 
   val subject = stapl.core.subject // FIXME do we work on the single subject object here? we need a local copy of some sort

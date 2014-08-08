@@ -22,6 +22,9 @@ package stapl.core.examples
 import stapl.core._
 import stapl.core.templates._
 
+/**
+ * Example of a policy based on an e-health scenario.
+ */
 object EhealthPolicy extends BasicPolicy {
   
   env.currentDateTime = SimpleAttribute(DateTime)

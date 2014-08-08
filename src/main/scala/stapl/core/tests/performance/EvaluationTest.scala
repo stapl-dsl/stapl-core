@@ -25,6 +25,9 @@ import stapl.core.NotApplicable
 import stapl.core.Permit
 import stapl.core.AttributeContainer
 
+/**
+ * The tests used for evaluating the policy evaluation performance in the paper.
+ */
 object EvaluationTest extends App {
 
   val policyHome = args(0)

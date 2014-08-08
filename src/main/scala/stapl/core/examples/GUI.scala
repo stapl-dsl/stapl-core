@@ -33,6 +33,9 @@ import stapl.core.pdp.EvaluationCtx
 import stapl.core.pdp.AttributeFinderModule
 import stapl.core.pdp.AttributeFinder
 
+/**
+ * Example of a GUI that loads policies dynamically.
+ */
 object GUI extends SimpleSwingApplication {
   
   var prevPolicy = ""

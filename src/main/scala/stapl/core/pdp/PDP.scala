@@ -25,6 +25,10 @@ import stapl.core.ConcreteValue
 import stapl.core.Decision
 import stapl.core.Result
 
+/**
+ * Class used for representing a policy decision point (PDP). A PDP provides
+ * access decisions by evaluating a policy.
+ */
 class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
   
   /**
@@ -33,11 +37,25 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
    */
   def this(policy:AbstractPolicy) = this(policy, new AttributeFinder)
   
+  /**
+   * Evaluate the policy of this PDP with given subject id, action id, resource id
+   * and possibly extra attributes and return the result.
+   * This will employ the attribute finder of this PDP.
+   */
   def evaluate(subjectId: String, actionId: String, 
     resourceId: String, extraAttributes: (Attribute,ConcreteValue)*): Result =
       evaluate(new RequestCtx(subjectId, actionId, resourceId, extraAttributes: _*))
   
+  /**
+   * Evaluate the policy of this PDP with given request context and return the result.
+   * This will employ the attribute finder of this PDP.
+   */
   def evaluate(ctx: RequestCtx): Result = evaluate(new BasicEvaluationCtx(ctx, attributeFinder))
   
+  /**
+   * Evaluate the policy of this PDP with given evaluation context and return
+   * the result. 
+   * This allows you to specify another attribute finder than the one of this PDP.
+   */
   def evaluate(ctx: EvaluationCtx): Result = policy.evaluate(ctx)
 }

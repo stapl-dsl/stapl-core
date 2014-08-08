@@ -4,6 +4,10 @@ import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.IMain
 import stapl.core.AbstractPolicy
 
+/**
+ * A class for parsing policies dynamically from strings.
+ * This parser employs the Scala interpreter.
+ */
 class PolicyParser {
   val settings = new Settings
   settings.usejavacp.value = true
@@ -15,12 +19,28 @@ class PolicyParser {
       "stapl.core.templates._")
   })
   
+  /**
+   * Add another import to the Scala interpreter employed by this parser.
+   */
   def addImport(i: String) = {
     interpreter.beQuietDuring({
       interpreter.addImports(i)
     })
   }
 
+  /**
+   * Parse the given policy string and return the resulting policy.
+   * 
+   * @param		policyString: String
+   * 			The string containing the STAPL policy. This policy should not
+   *    		contain attribute definitions and should just contain the policy
+   *      		specification, not an assignment to a val. 
+   *        	For example: policyString = "Policy(...) := ..."
+   * 
+   * @throws 	RuntimeException	
+   * 			When the parser did not success in getting 
+   * 			an abstract policy from the given string.
+   */
   def parse(policyString: String): AbstractPolicy = {
     val completePolicy = s"val policy = $policyString"
     interpreter.beQuietDuring({
@@ -36,6 +56,12 @@ class PolicyParser {
     }
   }
   
+  /**
+   * Parse the contents of the given file as a policy string and return 
+   * the resulting policy.
+   * 
+   * More details: see parse(policyString: String)
+   */
   def parseFile(path: String): AbstractPolicy = {
     val source = io.Source.fromFile(path)
     val policyString = source.mkString

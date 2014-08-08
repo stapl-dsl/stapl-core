@@ -3,6 +3,9 @@ package stapl.core.examples
 import stapl.core._
 import stapl.core.templates._
 
+/**
+ * The policy from readme.md
+ */
 object PolicyFromTheReadMe extends BasicPolicy {
  
   subject.roles								= ListAttribute(String)

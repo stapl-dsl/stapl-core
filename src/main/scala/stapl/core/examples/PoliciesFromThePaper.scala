@@ -22,6 +22,11 @@ package stapl.core.examples
 import stapl.core._
 import stapl.core.templates._
 
+/**
+ * The policies from the paper (see X).
+ * 
+ * TODO add ref to the paper after publication
+ */
 object PoliciesFromThePaper extends BasicPolicy {
   
   	subject.roles = ListAttribute(String)

@@ -23,7 +23,13 @@ import scala.language.dynamics
 import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
 
-
+/**
+ * Base class for all attribute containers, such as the subject, resource, action and environment
+ * in most STAPL policies.
+ * 
+ * By extending Dynamic, we can assign attributes to this attribute container as a variable. For example:
+ * subject.roles = ListAttribute(String) -> subjct.set("roles", ListAttribute(String))
+ */
 class AttributeContainer private(cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
 
   final def this(cType: AttributeContainerType) = this(cType, Map("id" -> SimpleAttribute(cType, "id", String)))
@@ -63,7 +69,11 @@ class AttributeContainer private(cType: AttributeContainerType, attributes: Map[
   }
 }
 
-
+/**
+ * All attribute container types for now.
+ * 
+ * TODO: extend this to support the container hierarchies as well?
+ */
 sealed abstract class AttributeContainerType
 case object SUBJECT extends AttributeContainerType
 case object RESOURCE extends AttributeContainerType

@@ -30,6 +30,13 @@ import stapl.core.ListAttribute
 import stapl.core.SimpleAttribute
 import stapl.core.TypeCheckException
 
+/**
+ * Class used for representing an attribute finder used by a PDP. An attribute
+ * finder tries to find values for a certain value during policy evaluation.
+ * An attribute finder contains multiple attribute finder modules that each
+ * connect to a certain attribute value source, such as a hard-coded list, a file or
+ * a database.
+ */
 sealed class AttributeFinder {
   type Modules = List[AttributeFinderModule]
   private var _modules: Modules = Nil
@@ -39,13 +46,25 @@ sealed class AttributeFinder {
     _modules = modules
   }
   
+  /**
+   * Add an attribute finder module to this attribute finder.
+   */
   def addModule(module: AttributeFinderModule) {
     _modules = module :: _modules
   }
   
+  /**
+   * Short notation for adding attribute finder modules.
+   */
   def +=(module: AttributeFinderModule) = addModule(module)
   
-  @throws[AttributeNotFoundException]("if the attribute isn't found")
+  /**
+   * Tries to find the value of a certain attribute in the given evaluation context.
+   * 
+   * @throws	AttributeNotFoundException	If the attribute value isn't found
+   * @throws	TypeCheckException 	If the type of the found value doesn't conform to the declared type of the attribute
+   */
+  @throws[AttributeNotFoundException]("if the attribute value isn't found")
   @throws[TypeCheckException]("if the type of the found value doesn't conform to the declared type of the attribute")
   def find(ctx: EvaluationCtx, attribute: Attribute): ConcreteValue = {
     @tailrec
@@ -60,12 +79,24 @@ sealed class AttributeFinder {
   }
 }
 
+/**
+ * Trait for all attribute finder modules passed to an attribute finder.
+ */
 trait AttributeFinderModule {
+  
+  /**
+   * The public method for trying to find the value of a certain attribute.
+   * 
+   * TODO why is this private[core]?
+   */
   private[core] def find(ctx: EvaluationCtx, attribute: Attribute): Option[ConcreteValue] = attribute match {
     case SimpleAttribute(cType,name,aType) => checkTypeSimple(find(ctx, cType, name, aType), aType)
     case ListAttribute(cType,name,aType) => checkTypeList(find(ctx, cType, name, aType), aType)
   }
   
+  /**
+   * Check the type of the given value.
+   */
   private def checkTypeSimple(result: Option[ConcreteValue], aType: AttributeType): Option[ConcreteValue] = {
     result match {
       case Some(value) => {
@@ -77,6 +108,9 @@ trait AttributeFinderModule {
     result
   }
   
+  /**
+   * Check the type of the given value.
+   */
   private def checkTypeList(result: Option[ConcreteValue], aType: AttributeType): Option[ConcreteValue] = {
     result match {
       case Some(value) => {
@@ -88,6 +122,9 @@ trait AttributeFinderModule {
     result
   }
   
+  /**
+   * The actual implementation for trying to find the value of a certain attribute.
+   */
   protected def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue]
   
 }

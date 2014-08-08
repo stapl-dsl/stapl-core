@@ -19,10 +19,13 @@
  */
 package stapl.core
 
+/**
+ * Package containing some policy templates which commonly occur in policies. 
+ */
 package object templates {
 
   /**
-   * Actually, this is DenyIffNot
+   * TODO Actually, this is DenyIffNot
    */
   def OnlyPermitIff(id: String)(target: Expression, condition: Expression): Policy =
     Policy(id) := when(target) apply PermitOverrides to (
@@ -30,23 +33,35 @@ package object templates {
       Rule("OnlyPermitIff-deny") := deny)
 
   /**
-   * Actually, this is PermitIffNot
+   * TODO Actually, this is PermitIffNot
    */
   def OnlyDenyIff(id: String)(target: Expression, condition: Expression): Policy =
     Policy(id) := when(target) apply DenyOverrides to (
       Rule("OnlyDenyIff-condition") := deny iff (condition),
       Rule("OnlyDenyIff-permit") := permit)
 
+  /**
+   * Default permit with default id.
+   */
   def defaultPermit: Rule = defaultPermit("default-permit")
 
+  /**
+   * Always returns Permit on every request.
+   */
   def defaultPermit(id: String): Rule =
     new Rule(id)(
       target = AlwaysTrue,
       effect = Permit,
       condition = AlwaysTrue)
 
+  /**
+   * Default deny with default id.
+   */
   def defaultDeny: Rule = defaultDeny("default-deny")
 
+  /**
+   * Always returns Deny on every request.
+   */
   def defaultDeny(id: String): Rule =
     new Rule(id)(
       target = AlwaysTrue,

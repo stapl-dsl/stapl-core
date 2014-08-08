@@ -36,6 +36,10 @@ object BehaviorTest {
     // nothing to do
   }
 }
+/**
+ * Some tests about the behavior of a PDP, such as different ways of 
+ * passing attributes, wrong types etc.
+ */
 class BehaviorTest extends AssertionsForJUnit {
 
   import EhealthPolicy._

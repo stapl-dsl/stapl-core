@@ -28,7 +28,10 @@ import stapl.core.ConcreteValue
 import stapl.core.string2Value
 
 /**
- * A class used for ...
+ * A class used for representing the context of a request.
+ * For now, this is nothing more than the ids of the subject,
+ * the action and the resource and any other attribute values given
+ * with the request.
  *
  * Constructor: Initialize this new RequestCtx with given values. 
  * The ids of the subject, action and resource should always be 

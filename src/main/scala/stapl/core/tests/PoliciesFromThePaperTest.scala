@@ -42,6 +42,9 @@ object PoliciesFromThePaperTest {
     // nothing to do
   }
 }
+/**
+ * Some tests of the policies from the paper.
+ */
 class PoliciesFromThePaperTest extends AssertionsForJUnit {
 
   import PoliciesFromThePaper._

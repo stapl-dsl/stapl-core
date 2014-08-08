@@ -21,6 +21,10 @@ package stapl.core
 
 import stapl.core.pdp.EvaluationCtx
 
+/**
+ * The base trait for all attributes in policies. Each Value has a 
+ * type and multiplicity (list or not).
+ */
 trait Value {
   
   val aType: AttributeType

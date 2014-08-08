@@ -25,6 +25,10 @@ import org.joda.time.LocalDateTime
 
 package object core {
   
+  /**
+   * Some implicits for converting standard Scala types to STAPL values. 
+   */
+  
   implicit def boolean2Value(boolean: Boolean): ConcreteValue = new BoolImpl(boolean)
   
   implicit def int2Value(int: Int): ConcreteValue = new NumberImpl(Left(int))
@@ -57,7 +61,10 @@ package object core {
   
   implicit def dayDurSeq2Value(seq: Seq[DayDurationImpl]): ConcreteValue = new DayDurSeqImpl(seq)
   
-  
+  /**
+   * Some implicits for converting standard Scala types to STAPL expressions. 
+   */
+    
   implicit def boolAttributeToExpression(attribute: Attribute): Expression = attribute match {
     case x@SimpleAttribute(_,_,Bool) => BoolExpression(x)
     case SimpleAttribute(_,_,aType) => throw new TypeCheckException(aType, Bool)
@@ -67,23 +74,27 @@ package object core {
   implicit def boolean2Expression(bool: Boolean): Expression = if(bool) AlwaysTrue else AlwaysFalse
   
   implicit def int2DurationBuilder(int: Int) = new DurationBuilder(int)
-  
-  
+    
   def abs(value: Value): Operation = AbsoluteValue(value)
   
+  /**
+   * Implicit for converting a Decision to a Result without obligations.
+   */
   implicit def decision2Result(decision: Decision): Result = Result(decision)
   
-  // For the natural policy language 
+  /**
+   * Implicit for the natural policy language.
+   */  
   implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
 	
-	
-  val action = new AttributeContainer(ACTION)
-  action.id = SimpleAttribute(String) 
+  /**
+   * The definitions of the standard subject, action, resource and environment.
+   */
   val subject = new AttributeContainer(SUBJECT)
   subject.id = SimpleAttribute(String) 
   val resource = new AttributeContainer(RESOURCE)
   resource.id = SimpleAttribute(String)
+  val action = new AttributeContainer(ACTION)
+  action.id = SimpleAttribute(String) 
   val environment = new AttributeContainer(ENVIRONMENT)
-  
-  val ID_NAME = "id";
 }

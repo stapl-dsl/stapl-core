@@ -42,6 +42,9 @@ object EhealthPolicyTest {
     // nothing to do
   }
 }
+/**
+ * Correctness tests of the e-health policy.
+ */
 class EhealthPolicyTest extends AssertionsForJUnit {
 
   import EhealthPolicy._

@@ -19,11 +19,26 @@
  */
 package stapl.core
 
+/**
+ * Class used for representing the result of a policy evaluation by a PDP.
+ * A result contains a decision and possibly obligation actions to be fulfilled.
+ */
 case class Result(val decision: Decision, val obligationActions: List[ObligationAction] = List.empty)
 
+/**
+ * Trait for representing a Decision ( = Permit, Deny or NotApplicable).
+ */
 sealed trait Decision
 
+/**
+ * Trait for representing the Effect of a Rule. 
+ * Only two Decisions are also Effects: Permit and Deny
+ */
 sealed trait Effect extends Decision {
+  
+  /**
+   * Returns the reverse of this effect: Permit -> Deny and Deny -> Permit.
+   */
   def reverse(): Effect = this match {
     case Permit => Deny
     case Deny => Permit

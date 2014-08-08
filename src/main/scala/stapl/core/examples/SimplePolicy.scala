@@ -27,13 +27,17 @@ import stapl.core.pdp.EvaluationCtx
 import stapl.core.pdp.AttributeFinderModule
 import stapl.core.pdp.AttributeFinder
 
-object Example extends App {
-
-  val action = new AttributeContainer(ACTION)
-  val subject = new AttributeContainer(SUBJECT)
-  val resource = new AttributeContainer(RESOURCE)
-  val env = new AttributeContainer(ENVIRONMENT)
+/**
+ * An example of how to specify and use a policy:
+ * 1. attribute definitions
+ * 2. policy specification
+ * 3. implementation of an attribute finder (hard-coded values)
+ * 4. set-up of the PDP
+ * 5. requesting decisions from the PDP
+ */
+object Example extends App with BasicPolicy {
   
+  // 1. attribute definitions
   subject.roles = ListAttribute(String)
   subject.birthday = SimpleAttribute(Day)
   val student = subject.refine()
@@ -88,6 +92,8 @@ object Example extends App {
   //                      TimeDuration(hours,minutes,seconds)
   // or in an expression in a policy: 5.months + 3.days + 2.minutes + 20.millis
   
+  
+  // 2. policy specification
   val studentPolicy = 
     new Rule("policy2")(
         target = "student" in subject.roles,
@@ -107,7 +113,7 @@ object Example extends App {
       Rule("policy3") := deny
   )
   
-  
+  // 3. implementation of an attribute finder (hard-coded values)
   class MyModule extends AttributeFinderModule {
     
     override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue] = {
@@ -147,9 +153,11 @@ object Example extends App {
     }
   }
   
+  // 4. set-up of the PDP
   val finder = new AttributeFinder
   finder += new MyModule
   val pdp = new PDP(policy, finder)
   
+  // 5. requesting decisions from the PDP
   println(pdp.evaluate(new RequestCtx("Jasper", "access", "The Catcher in the Rye")))
 }
