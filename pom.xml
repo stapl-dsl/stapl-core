@@ -5,15 +5,8 @@
 	<artifactId>stapl-core</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>${project.artifactId}</name>
-	<description>My wonderfull scala app</description>
-	<inceptionYear>2010</inceptionYear>
-	<licenses>
-		<license>
-			<name>My License</name>
-			<url>http://....</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+	<description>The core of the STAPL language for access control policies</description>
+	<inceptionYear>2014</inceptionYear>
 
 	<properties>
 		<maven.compiler.source>1.6</maven.compiler.source>
