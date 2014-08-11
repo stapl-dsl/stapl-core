@@ -15,7 +15,7 @@ This repository hosts `stapl-core`. Some other projects extend the core:
 
 Here is a simple example of a STAPL policy based on an e-health scenario:
 
-```scala
+```
 package mypackage
 
 import stapl.core._
@@ -39,7 +39,7 @@ object PolicyFromTheReadMe extends BasicPolicy {
 
 Quite consice and readable, no? As comparison, here is the XACML representation of this same policy:
 
-```xml
+```
 <Policy PolicyId="e-health example" 
         RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:permit-overrides">
   <Description>Permit only if the physician treated the owner of the patient data.</Description>
@@ -105,6 +105,9 @@ STAPL policies can be compiled just as any other Scala and Java code. However, y
 #### Efficient policy evaluation
 Compared to [our optimized version of the SunXACML engine][6], STAPL policies can be evaluated multiple times faster than their XACML equivalents.
 
+#### Extensive logging
+Wondering why a certain decision is Permit or Deny? Turn on logging and get an overview of the whole policy evaluation process.
+
 ### Future-plans
 
 Towards the future, we plan to add the following features.
@@ -118,7 +121,7 @@ The STAPL evaluation engine can be compiled directly into your Scala or Java app
 
 To get an access control decision, simply load the policy in the policy decision point (PDP) and ask for a decision:
 
-```scala
+```
 import mypackage.PolicyFromTheReadMe.policy
 val pdp = new PDP(policy)
 pdp.evaluate("john", "view", "doc123",
@@ -131,7 +134,7 @@ pdp.evaluate("john", "view", "doc123",
 
 If you cannot provide all attributes with the decision request or want to dynamically fetch attributes from a database, write your own AttributeFinderModule and add it to the PDP:
 
-```scala
+```
 class MyAttributeFinderModule extends AttributeFinderModule {
     
     override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType):
@@ -150,7 +153,7 @@ Because STAPL is implemented in Scala, you're best off with writing your policie
 
 Here is an example of using the Java API:
 
-```java
+```
 import stapl.core.AttributeContainer;
 import stapl.core.Policy;
 import stapl.core.Result;
@@ -200,7 +203,7 @@ For more examples, check the package `stapl.javaapi.examples`.
 
 Using the interface to the policy engine shown above, STAPL policies can easily be tested for correctness in JUnit unit tests:
 
-```scala
+```
 assert(pdp.evaluate("subject1", "view", "resource1",
         ... // any attributes for the test
     ) === Result(Permit, List(
@@ -210,6 +213,34 @@ assert(pdp.evaluate("subject1", "view", "resource1",
 ```
 
 For elaborate examples of policy testing, see the `scala.core.tests` package.
+
+# Logging
+
+Wondering why a certain decision is Permit or Deny? STAPL can provide you with a detailed overview of the whole policy evaluation process. For example, for the policy above, this could be the logging output:
+
+```
+09:36:46.191 [main] DEBUG stapl.core.Policy - FLOW: starting evaluation of PolicySet #e-health example
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(ACTION,id,String) in cache: view
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(RESOURCE,type_,String) in cache: patient-data
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of ListAttribute(SUBJECT,roles,String) in cache: List(physician)
+09:36:46.196 [main] DEBUG stapl.core.Rule - FLOW: starting evaluation of Policy #e-health example>requirement-for-permit
+09:36:46.196 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(RESOURCE,owner_id,String) in cache: patientX
+09:36:46.196 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of ListAttribute(SUBJECT,treated,String) in cache: List(patientX)
+09:36:46.196 [main] DEBUG stapl.core.Rule - FLOW: Policy #e-health example>requirement-for-permit returned Permit with obligations List()
+09:36:46.198 [main] DEBUG stapl.core.Policy - FLOW: PolicySet #e-health example returned Result(Permit,List())
+```
+
+By default, logging is turned off. To turn it on, edit the file `stapl-core/src/main/resources/logback.xml` by changing the line 
+
+```XML
+<logger name="stapl.core" level="OFF"/>
+```
+
+to
+
+```XML
+<logger name="stapl.core" level="DEBUG"/>
+```
 
 # Getting started
 
@@ -239,13 +270,11 @@ In the Scala IDE: Create a new Maven project with archetype `scala-archetype-sim
 
 Add the following lines to the `<dependencies>` section in your `pom.xml`:
 
-```xml
-<dependency>
-    <groupId>stapl</groupId>
-    <artifactId>stapl-core</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-</dependency>
-```
+    <dependency>
+    	<groupId>stapl</groupId>
+    	<artifactId>stapl-core</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
 
 #### 5. Create a new policy
 
@@ -253,7 +282,7 @@ The simplest way to create a new policy is to declare a Scala `object` and assig
 
 For example, add this simple policy to the end of the `App.scala` file generated by the Scala IDE:
 
-```scala
+```
 import stapl.core._
 import stapl.core.templates._
 
@@ -283,13 +312,13 @@ Now that we have declared a new policy, you can use it by importing it, putting 
 
 For example, let's test the policy in the `main` method generated by the Scala IDE. First, add the following import to the top of `App.scala` (but below the `package` declaration):
 
-```scala
+```
 import stapl.core.pdp._
 ```
 
 Then change the main method of `object App` to the following:
 
-```scala
+```
 def main(args : Array[String]) {
   import ExamplePolicy._
   val pdp = new PDP(policy)
