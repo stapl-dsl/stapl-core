@@ -90,41 +90,13 @@ trait AttributeFinderModule {
    * TODO why is this private[core]?
    */
   private[core] def find(ctx: EvaluationCtx, attribute: Attribute): Option[ConcreteValue] = attribute match {
-    case SimpleAttribute(cType,name,aType) => checkTypeSimple(find(ctx, cType, name, aType), aType)
-    case ListAttribute(cType,name,aType) => checkTypeList(find(ctx, cType, name, aType), aType)
-  }
-  
-  /**
-   * Check the type of the given value.
-   */
-  private def checkTypeSimple(result: Option[ConcreteValue], aType: AttributeType): Option[ConcreteValue] = {
-    result match {
-      case Some(value) => {
-        require(!value.isList, "This value should not be a list.")
-        AttributeType.checkType(value.aType, aType)
-      }
-      case None => 
-    }
-    result
-  }
-  
-  /**
-   * Check the type of the given value.
-   */
-  private def checkTypeList(result: Option[ConcreteValue], aType: AttributeType): Option[ConcreteValue] = {
-    result match {
-      case Some(value) => {
-        require(value.isList, "This value should be a list.")
-        AttributeType.checkType(value.aType, aType)
-      }
-      case None => 
-    }
-    result
+    case SimpleAttribute(cType,name,aType) => find(ctx, cType, name, aType, false)
+    case ListAttribute(cType,name,aType) => find(ctx, cType, name, aType, true)
   }
   
   /**
    * The actual implementation for trying to find the value of a certain attribute.
    */
-  protected def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue]
+  protected def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType, multiValued: Boolean): Option[ConcreteValue]
   
 }

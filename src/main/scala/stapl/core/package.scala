@@ -43,11 +43,15 @@ package object core {
   
   implicit def stringSeq2Value(seq: Seq[String]): ConcreteValue = new StringSeqImpl(seq)
   
+  implicit def booleanSeq2Value(seq: Seq[Boolean]): ConcreteValue = new BoolSeqImpl(seq)
+  
   implicit def intSeq2Value(seq: Seq[Int]): ConcreteValue = new IntSeqImpl(seq)
   
   implicit def doubleSeq2Value(seq: Seq[Double]): ConcreteValue = new DoubleSeqImpl(seq)
   
   implicit def longSeq2Value(seq: Seq[Long]): ConcreteValue = new LongSeqImpl(seq)
+  
+  implicit def jodaDateTimeSeq2Value(seq: Seq[LocalDateTime]): ConcreteValue = new DateTimeSeqImpl(seq.map(l => new DateTimeImpl(l)))
   
   implicit def dateTimeSeq2Value(seq: Seq[DateTimeImpl]): ConcreteValue = new DateTimeSeqImpl(seq)
   

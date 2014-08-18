@@ -116,7 +116,10 @@ object Example extends App with BasicPolicy {
   // 3. implementation of an attribute finder (hard-coded values)
   class MyModule extends AttributeFinderModule {
     
-    override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType): Option[ConcreteValue] = {
+    override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, 
+        aType: AttributeType, multiValued: Boolean): Option[ConcreteValue] = {
+      // Note: we do not check the multiValued boolean here, the code below
+      // knows these hard-coded
       cType match {
         case SUBJECT => name match {
           case "roles" => ctx.subjectId match {

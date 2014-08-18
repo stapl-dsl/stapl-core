@@ -22,48 +22,61 @@ package stapl.core
 import AttributeType._
 import stapl.core.pdp.EvaluationCtx
 
-sealed abstract class Attribute(cType: AttributeContainerType, name: String, aType: AttributeType) extends Value {
-  
-  override def getConcreteValue(ctx: EvaluationCtx) = 
+sealed abstract class Attribute(val cType: AttributeContainerType, val name: String, val aType: AttributeType) extends Value {
+
+  override def getConcreteValue(ctx: EvaluationCtx) =
     ctx.findAttribute(this)
 }
-
-
-
-case class ListAttribute(cType: AttributeContainerType, name: String, aType: AttributeType) 
-  extends Attribute(cType, name, aType) {
+object Attribute {
   
+  /**
+   * A constructor to get a ListAttribute or SimpleAttribute depending on the
+   * given multiplicity.
+   */
+  def apply(cType: AttributeContainerType, name: String, aType: AttributeType, multiValued: Boolean): Attribute = {
+    if(multiValued) {
+      new ListAttribute(cType, name, aType) 
+    } else { 
+      new SimpleAttribute(cType, name, aType)
+    }
+  }
+}
+
+case class ListAttribute(ct: AttributeContainerType, n: String, at: AttributeType)
+  extends Attribute(ct, n, at) {
+
   override val isList = true
+  
+  override def toString(): String = s"$cType.$name:List[$aType]"
+
 }
 
 object ListAttribute {
   import AttributeConstruction.UninitializedAttribute
-  def apply(sType: AttributeType): UninitializedAttribute = 
+  def apply(sType: AttributeType): UninitializedAttribute =
     (None, new ListAttribute(_: AttributeContainerType, _: String, sType))
-  
-  def apply(name: String, sType: AttributeType): UninitializedAttribute = 
+
+  def apply(name: String, sType: AttributeType): UninitializedAttribute =
     (Option(name), new ListAttribute(_: AttributeContainerType, _: String, sType))
 }
 
+case class SimpleAttribute(ct: AttributeContainerType, n: String, at: AttributeType)
+  extends Attribute(ct, n, at) {
 
-
-case class SimpleAttribute(cType: AttributeContainerType, name: String, aType: AttributeType) 
-  extends Attribute(cType, name, aType) {
-  
   override val isList = false
   
+  override def toString(): String = s"$cType.$name:$aType"
+
 }
 
 object SimpleAttribute {
   import AttributeConstruction.UninitializedAttribute
-  def apply(sType: AttributeType): UninitializedAttribute = 
+  def apply(sType: AttributeType): UninitializedAttribute =
     (None, new SimpleAttribute(_: AttributeContainerType, _: String, sType))
-  
-  def apply(name: String, sType: AttributeType): UninitializedAttribute = 
+
+  def apply(name: String, sType: AttributeType): UninitializedAttribute =
     (Option(name), new SimpleAttribute(_: AttributeContainerType, _: String, sType))
 }
-
-
 
 object AttributeConstruction {
   private type AttributeConstructor = (AttributeContainerType, String) => Attribute

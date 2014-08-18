@@ -35,6 +35,7 @@ import stapl.core.Attribute
  */
 trait EvaluationCtx {
   
+  def evaluationId: Long
   def subjectId: String
   def resourceId: String
   def actionId: String
@@ -46,7 +47,7 @@ trait EvaluationCtx {
  * stores the subject id, the resource id, the action id and stores found
  * attribute values in a cache for this evaluation context. 
  */
-class BasicEvaluationCtx(request: RequestCtx, finder: AttributeFinder) extends EvaluationCtx with Logging {
+class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, finder: AttributeFinder) extends EvaluationCtx with Logging {
   
   override val subjectId: String = request.subjectId
   

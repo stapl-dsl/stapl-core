@@ -57,7 +57,9 @@ class ArtificialAttributeFinderModule extends AttributeFinderModule {
   /**
    *
    */
-  override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, aType: AttributeType) = {
+  override def find(ctx: EvaluationCtx, cType: AttributeContainerType, name: String, 
+      aType: AttributeType, multiValued: Boolean) = {
+    // Note: we do not check the multiValued boolean, we just return single-valued attributes.
     if (name.startsWith("attribute")) {
       Some("rubbish")
     } else {

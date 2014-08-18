@@ -37,7 +37,7 @@ object Representation {
     Option(value.getConcreteValue(ctx).representation)
 }
 
-sealed trait ConcreteValue extends Value {
+sealed trait ConcreteValue extends Value with Serializable {
   
   override def getConcreteValue(ctx: EvaluationCtx): ConcreteValue = this
   

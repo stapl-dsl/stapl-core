@@ -46,5 +46,7 @@ class RequestCtx(val subjectId: String, val actionId: String,
   allAttributes += subject.id -> subjectId
   allAttributes += resource.id -> resourceId
   allAttributes += action.id -> actionId 
+  
+  override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.extraAttributes}" 
       
 }
