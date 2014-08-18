@@ -60,7 +60,7 @@ class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
 	extends AbstractPolicy(id) with Logging {
   
   override def evaluate(ctx:EvaluationCtx): Result = {
-    debug("FLOW: starting evaluation of Policy #" + fqid)
+    debug(s"FLOW: starting evaluation of Policy #$fqid (evaluation id #${ctx.evaluationId})")
     if (!isApplicable(ctx)) {
       debug(s"FLOW: Policy #$fqid was NotApplicable because of target")
       NotApplicable

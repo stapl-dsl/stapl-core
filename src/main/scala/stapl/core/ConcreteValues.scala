@@ -347,6 +347,8 @@ sealed abstract class BasicValue(private val value: Any, override val aType: Att
 
 class NumberImpl(value: Either[Long,Double]) extends BasicValue(value, Number) {
   
+  // TODO: remove Double for ease of use?
+  
   override val representation: Any = value match {
     case Left(long) => long
     case Right(double) => double
@@ -477,6 +479,8 @@ abstract class SeqValue(private val seq: Seq[Any], override val aType: Attribute
   
   override def toString(): String = seq.toString
   
+  def length = seq.length
+  
   override def equals(other: Any) = {
     other match {
       case that: SeqValue => canEqual(other) && seq == that.seq
@@ -526,6 +530,9 @@ class DaySeqImpl(seq: Seq[DayImpl]) extends SeqValue(seq, Day) {
   
   def canEqual(other: Any) = other.isInstanceOf[DaySeqImpl]
 }
+
+// FIXME why do the date sequences wrap other Impl classes instead of sequences
+// of joda classes? The other SeqImpl classes do wrap raw types.
 
 class DateTimeSeqImpl(seq: Seq[DateTimeImpl]) extends SeqValue(seq, DateTime) {
   

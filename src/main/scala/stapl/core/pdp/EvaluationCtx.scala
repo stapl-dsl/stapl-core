@@ -47,7 +47,8 @@ trait EvaluationCtx {
  * stores the subject id, the resource id, the action id and stores found
  * attribute values in a cache for this evaluation context. 
  */
-class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, finder: AttributeFinder) extends EvaluationCtx with Logging {
+class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, 
+    finder: AttributeFinder) extends EvaluationCtx with Logging {
   
   override val subjectId: String = request.subjectId
   
