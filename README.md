@@ -105,6 +105,9 @@ STAPL policies can be compiled just as any other Scala and Java code. However, y
 #### Efficient policy evaluation
 Compared to [our optimized version of the SunXACML engine][6], STAPL policies can be evaluated multiple times faster than their XACML equivalents.
 
+#### Extensive logging
+Wondering why a certain decision is Permit or Deny? Turn on logging and get an overview of the whole policy evaluation process.
+
 ### Future-plans
 
 Towards the future, we plan to add the following features.
@@ -211,6 +214,34 @@ assert(pdp.evaluate("subject1", "view", "resource1",
 
 For elaborate examples of policy testing, see the `scala.core.tests` package.
 
+# Logging
+
+Wondering why a certain decision is Permit or Deny? STAPL can provide you with a detailed overview of the whole policy evaluation process. For example, for the policy above, this could be the logging output:
+
+```
+09:36:46.191 [main] DEBUG stapl.core.Policy - FLOW: starting evaluation of PolicySet #e-health example
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(ACTION,id,String) in cache: view
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(RESOURCE,type_,String) in cache: patient-data
+09:36:46.194 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of ListAttribute(SUBJECT,roles,String) in cache: List(physician)
+09:36:46.196 [main] DEBUG stapl.core.Rule - FLOW: starting evaluation of Policy #e-health example>requirement-for-permit
+09:36:46.196 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of SimpleAttribute(RESOURCE,owner_id,String) in cache: patientX
+09:36:46.196 [main] DEBUG stapl.core.pdp.BasicEvaluationCtx - FLOW: found value of ListAttribute(SUBJECT,treated,String) in cache: List(patientX)
+09:36:46.196 [main] DEBUG stapl.core.Rule - FLOW: Policy #e-health example>requirement-for-permit returned Permit with obligations List()
+09:36:46.198 [main] DEBUG stapl.core.Policy - FLOW: PolicySet #e-health example returned Result(Permit,List())
+```
+
+By default, logging is turned off. To turn it on, edit the file `stapl-core/src/main/resources/logback.xml` by changing the line 
+
+```XML
+<logger name="stapl.core" level="OFF"/>
+```
+
+to
+
+```XML
+<logger name="stapl.core" level="DEBUG"/>
+```
+
 # Getting started
 
 Here are a few simple steps you can follow to get started with STAPL. If you want to skip even this explanation and want to dive right into STAPL, the [stapl-getting-started][9] project contains the resulting Maven project, just `git clone` it.
@@ -239,13 +270,11 @@ In the Scala IDE: Create a new Maven project with archetype `scala-archetype-sim
 
 Add the following lines to the `<dependencies>` section in your `pom.xml`:
 
-```xml
-<dependency>
-    <groupId>stapl</groupId>
-    <artifactId>stapl-core</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-</dependency>
-```
+    <dependency>
+    	<groupId>stapl</groupId>
+    	<artifactId>stapl-core</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
+    </dependency>
 
 #### 5. Create a new policy
 
