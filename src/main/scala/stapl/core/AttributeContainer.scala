@@ -32,7 +32,7 @@ import scala.collection.mutable.Buffer
  */
 class AttributeContainer private(cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
 
-  final def this(cType: AttributeContainerType) = this(cType, Map("id" -> SimpleAttribute(cType, "id", String)))
+  final def this(cType: AttributeContainerType) = this(cType, Map())
   
   // import the type alias for uninitialized attributes
   import AttributeConstruction.UninitializedAttribute
