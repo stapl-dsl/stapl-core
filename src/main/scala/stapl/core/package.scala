@@ -94,11 +94,11 @@ package object core {
   /**
    * The definitions of the standard subject, action, resource and environment.
    */
-  val subject = new AttributeContainer(SUBJECT)
+  val subject = new SubjectAttributeContainer
   subject.id = SimpleAttribute(String) 
-  val resource = new AttributeContainer(RESOURCE)
+  val resource = new ResourceAttributeContainer
   resource.id = SimpleAttribute(String)
-  val action = new AttributeContainer(ACTION)
+  val action = new ActionAttributeContainer
   action.id = SimpleAttribute(String) 
-  val environment = new AttributeContainer(ENVIRONMENT)
+  val environment = new EnvironmentAttributeContainer
 }
