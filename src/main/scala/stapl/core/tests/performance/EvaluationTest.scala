@@ -69,7 +69,7 @@ object EvaluationTest extends App {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
       if (result.decision != Permit) {
         throw new RuntimeException("The policy did not evaluate correctly!")
       }
@@ -95,7 +95,7 @@ object EvaluationTest extends App {
             resource.owner_withdrawn_consents -> List("subject1"),
             resource.type_ -> "patientstatus",
             resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-            env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
+            environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1))
           if (result.decision != Permit) {
             throw new RuntimeException("The policy did not evaluate correctly!")
           }

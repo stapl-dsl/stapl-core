@@ -36,9 +36,9 @@ object EdocsPolicy extends BasicPolicy {
   resource.project 							= SimpleAttribute(String)
   resource.topic 							= SimpleAttribute(String)
   resource.type_ 							= SimpleAttribute(String)
-  env.current_date_between_20_and_25 		= SimpleAttribute(Bool) 	// Note: we did not want to model this in XACML in full 
-  env.current_time_between_7_and_19 		= SimpleAttribute(Bool)	 	// because of the difficulty of writing this, but we could do this easily
-  env.dateTimeOk							= SimpleAttribute(Bool)		// in STAPL! However, for honest comparison: leave it this way.
+  environment.current_date_between_20_and_25 		= SimpleAttribute(Bool) 	// Note: we did not want to model this in XACML in full 
+  environment.current_time_between_7_and_19 		= SimpleAttribute(Bool)	 	// because of the difficulty of writing this, but we could do this easily
+  environment.dateTimeOk							= SimpleAttribute(Bool)		// in STAPL! However, for honest comparison: leave it this way.
   
   val policy = Policy("edocs") := apply DenyOverrides to (
       // For members of the provider
@@ -292,7 +292,7 @@ object EdocsPolicy extends BasicPolicy {
               Rule("HR") := deny iff (! (subject.department === "HR")),
               
               // Users can only be created on weekdays between 7am and 7pm. Simplification: avoid the date operations by using the "date-ok" attribute.
-              Rule("weekdays") := deny iff (! env.dateTimeOk),
+              Rule("weekdays") := deny iff (! environment.dateTimeOk),
               
               defaultPermit
           ),

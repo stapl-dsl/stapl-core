@@ -177,7 +177,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Permit,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Permit,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentNotAllowed {
@@ -195,7 +195,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentNotAtHospital {
@@ -213,7 +213,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentNotInNurseUnit {
@@ -231,7 +231,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentNotResponsible {
@@ -249,7 +249,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentNotOwner {
@@ -267,7 +267,7 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 22, 14, 2, 1), // three days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
   
   @Test def testDenyNurseOfElderCareDepartmentTooLongAgo {
@@ -285,6 +285,6 @@ class EhealthPolicyTest extends AssertionsForJUnit {
         resource.owner_withdrawn_consents -> List("subject1"),
         resource.type_ -> "patientstatus",
         resource.created -> new LocalDateTime(2014, 6, 1, 14, 2, 1), // X more than five days ago
-        env.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
+        environment.currentDateTime -> new LocalDateTime(2014, 6, 24, 14, 2, 1)) === Result(Deny,List()))
   }
 }

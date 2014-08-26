@@ -28,13 +28,13 @@ object EhealthAttributes {
   val subject = EhealthPolicy.subject
   val resource = EhealthPolicy.resource
   val action = EhealthPolicy.action
-  val env = EhealthPolicy.env
+  val env = EhealthPolicy.environment
 }
 object EdocsAttributes {  
   val subject = EdocsPolicy.subject
   val resource = EdocsPolicy.resource
   val action = EdocsPolicy.action
-  val env = EdocsPolicy.env
+  val env = EdocsPolicy.environment
 }
 object ArtificialAttributes {
   val subject = stapl.core.subject

@@ -27,7 +27,7 @@ import stapl.core.templates._
  */
 object EhealthPolicy extends BasicPolicy {
   
-  env.currentDateTime = SimpleAttribute(DateTime)
+  environment.currentDateTime = SimpleAttribute(DateTime)
   resource.type_ = SimpleAttribute(String)
   resource.owner_withdrawn_consents = ListAttribute(String)
   resource.operator_triggered_emergency = SimpleAttribute(Bool)
@@ -115,20 +115,20 @@ object EhealthPolicy extends BasicPolicy {
       Rule("policy:14") := deny iff !((subject.department === "cardiology") | (subject.department === "elder_care")),
       
       // Nurses can only access the PMS during their shifts.
-      Rule("policy:15") := deny iff !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
+      Rule("policy:15") := deny iff !((environment.currentDateTime gteq subject.shift_start) & (environment.currentDateTime lteq subject.shift_stop)),
       
       // Nurses can only access the PMS from the hospital.
       Rule("policy:16") := deny iff !(subject.location === "hospital"),
       
       // Nurses can only view the patient's status of the last five days.
-      Rule("policy:17") := deny iff !(env.currentDateTime lteq (resource.created + 5.days)),
+      Rule("policy:17") := deny iff !(environment.currentDateTime lteq (resource.created + 5.days)),
       
       // For nurses of cardiology department: they can only view the patient status of a patient 
       // in their nurse unit for whom they are assigned responsible, up to three days after they were discharged.
       OnlyPermitIff("policyset:8")(
           target = subject.department === "cardiology",
           (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
-          	& (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
+          	& (!resource.owner_discharged | (environment.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
       ),
         
       // For nurses of the elder care department.
@@ -260,7 +260,7 @@ object EhealthPolicy extends BasicPolicy {
 		      
 		      // Nurses can only access the PMS during their shifts.
 		      new Rule("policy:15")(
-		          target = !((env.currentDateTime gteq subject.shift_start) & (env.currentDateTime lteq subject.shift_stop)),
+		          target = !((environment.currentDateTime gteq subject.shift_start) & (environment.currentDateTime lteq subject.shift_stop)),
 		          effect = Deny),
 		      
 		      // Nurses can only access the PMS from the hospital.
@@ -270,7 +270,7 @@ object EhealthPolicy extends BasicPolicy {
 		      
 		      // Nurses can only view the patient's status of the last five days.
 		      new Rule("policy:17")(
-		          target = !(env.currentDateTime lteq (resource.created + 5.days)),
+		          target = !(environment.currentDateTime lteq (resource.created + 5.days)),
 		          effect = Deny),
 		      
 		      // For nurses of cardiology department: they can only view the patient status of a patient 
@@ -278,7 +278,7 @@ object EhealthPolicy extends BasicPolicy {
 		      OnlyPermitIff("policyset:8")(
 		          target = subject.department === "cardiology",
 		          (resource.owner_id in subject.admitted_patients_in_nurse_unit) 
-		          	& (!resource.owner_discharged | (env.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
+		          	& (!resource.owner_discharged | (environment.currentDateTime lteq (resource.owner_discharged_dateTime + 3.days)))
 		      ),
 		        
 		      // For nurses of the elder care department.

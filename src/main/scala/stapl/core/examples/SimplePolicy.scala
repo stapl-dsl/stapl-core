@@ -45,7 +45,7 @@ object Example extends App with BasicPolicy {
   val teacher = subject.refine()
   teacher.isHeadTeacher = SimpleAttribute(Bool)
   resource.category = SimpleAttribute(String)
-  env.today = SimpleAttribute(Day)
+  environment.today = SimpleAttribute(Day)
   
   // subject.attribute = SimpleAttribute("AlternativeName", Number)
   // val parent = subject.refine()
@@ -98,7 +98,7 @@ object Example extends App with BasicPolicy {
     new Rule("policy2")(
         target = "student" in subject.roles,
         effect = Permit,
-        condition = (subject.birthday + 18.years + 1.days) lteq env.today
+        condition = (subject.birthday + 18.years + 1.days) lteq environment.today
     )
   
   def alwaysPermitRole(id: String, role: String) =

@@ -39,7 +39,7 @@ object PoliciesFromThePaper extends BasicPolicy {
 	nurse.shift_start = SimpleAttribute(Time)
 	nurse.shift_stop = SimpleAttribute(Time)
 	resource.owner_id = SimpleAttribute(String)
-	env.currentTime = SimpleAttribute(Time)
+	environment.currentTime = SimpleAttribute(Time)
 
   val bigExample = Policy("for-viewing") := when(action.id === "view") apply PermitOverrides to (
     // Permit head physicians
@@ -52,7 +52,7 @@ object PoliciesFromThePaper extends BasicPolicy {
       Rule("treated") := when(nurse.department === "cardiology") permit iff (resource.owner_id in nurse.treated),
 
       // Nurses can only access the PMS during their shifts.
-      Rule("shifts") := deny iff !((env.currentTime gteq nurse.shift_start) & (env.currentTime lteq nurse.shift_stop)),
+      Rule("shifts") := deny iff !((environment.currentTime gteq nurse.shift_start) & (environment.currentTime lteq nurse.shift_stop)),
 
       // Patients can only view their own data
       Rule("patients") := when ("patient" in subject.roles) deny
