@@ -23,6 +23,8 @@ import scala.language.dynamics
 import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
 
+class AttributeDeclarationException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause) 
+
 /**
  * Base class for all attribute containers, such as the subject, resource, action and environment
  * in most STAPL policies.
@@ -42,6 +44,9 @@ class AttributeContainer private(cType: AttributeContainerType, attributes: Map[
     val actualAttribute = optionName match {
       case Some(someName) => attributeConstructor(cType, someName)
       case None => attributeConstructor(cType, name)
+    }
+    if(attributes.contains(name)) {
+      throw new AttributeDeclarationException(s"Error when assigning $cType.$name: already assigned")
     }
     attributes += name -> actualAttribute
     refinements.foreach(_.updateDynamic(name)(attribute))    
@@ -79,3 +84,8 @@ case object SUBJECT extends AttributeContainerType
 case object RESOURCE extends AttributeContainerType
 case object ENVIRONMENT extends AttributeContainerType
 case object ACTION extends AttributeContainerType
+
+class SubjectAttributeContainer extends AttributeContainer(SUBJECT)
+class ResourceAttributeContainer extends AttributeContainer(RESOURCE)
+class EnvironmentAttributeContainer extends AttributeContainer(ENVIRONMENT)
+class ActionAttributeContainer extends AttributeContainer(ACTION)
