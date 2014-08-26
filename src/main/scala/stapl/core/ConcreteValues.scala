@@ -37,7 +37,7 @@ object Representation {
     Option(value.getConcreteValue(ctx).representation)
 }
 
-sealed trait ConcreteValue extends Value with Serializable {
+trait ConcreteValue extends Value with Serializable {
   
   override def getConcreteValue(ctx: EvaluationCtx): ConcreteValue = this
   
@@ -323,7 +323,7 @@ class DayDurationImpl(period: Period) extends Duration(period) {
 }
 
 
-sealed abstract class BasicValue(private val value: Any, override val aType: AttributeType) extends ConcreteValue with Equals {
+abstract class BasicValue(private val value: Any, override val aType: AttributeType) extends ConcreteValue with Equals {
   
   override val isList = false
   

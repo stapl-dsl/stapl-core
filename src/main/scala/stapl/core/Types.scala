@@ -22,7 +22,7 @@ package stapl.core
 import java.util.Date
 
 
-sealed abstract class AttributeType {
+abstract class AttributeType {
   
   def addition(t: AttributeType): Option[AttributeType] = None
   def subtraction(t: AttributeType): Option[AttributeType] = None

@@ -22,7 +22,7 @@ package stapl.core
 import java.util.Date
 import stapl.core.pdp.EvaluationCtx
 
-sealed abstract class Expression {
+abstract class Expression {
   def evaluate(implicit ctx: EvaluationCtx): Boolean
   
   final def &(that: Expression): Expression = And(this, that)
