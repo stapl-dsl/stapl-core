@@ -343,7 +343,7 @@ Some important notes here:
 * Notice that we did not include any `AttributeFinder`s. These can be used to allow the PDP to search for attributes you did not pass with the request at run-time, for example in a database. For more information, take a look [above][11].
 * Notice that the PDP does not just return the decision, but also an empty list. This list contains the obligations which should be fulfilled with enforcing the access decision. It is empty because our example policy did not incorporate any obligations. For examples of obligations, check out the E-health policy in `stapl.core.examples`.
 
-If you want to test the policy more elaborately, see the `stapl.core.tests` package for examples.
+If you want to test the policy more elaborately, see the tests in `src/test/scala/stapl/core` for examples.
 
 
   [1]: #getting-started
