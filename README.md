@@ -9,7 +9,10 @@ For quickly getting started with STAPL, check out the [Quick Start][1] below.
 This repository hosts `stapl-core`. Some other projects extend the core:
 
 * [stapl-getting-started][2] provides a simple Maven project to quickly get you started with STAPL. For more information about this, see [below][3].
-* [stapl-java-api][4] provides a simple Java wrapper for the STAPL policy engine. More information [below][5]
+* [stapl-templates](https://github.com/maartendecat/stapl-templates) provides a number of policy templates that make it easier to write policies.
+* [stapl-java-api][4] provides a simple Java wrapper for the STAPL policy engine. More information [below][5].
+* [stapl-examples](https://github.com/maartendecat/stapl-examples) provides examples of using STAPL, the templates and the Java API.
+* [stapl-performance](https://github.com/maartendecat/stapl-performance) provides some performance tests.
 
 # Example
 
@@ -19,7 +22,6 @@ Here is a simple example of a STAPL policy based on an e-health scenario:
 package mypackage
 
 import stapl.core._
-import stapl.core.templates._
 
 object PolicyFromTheReadMe extends BasicPolicy {
     subject.roles		= ListAttribute(String)
@@ -32,7 +34,7 @@ object PolicyFromTheReadMe extends BasicPolicy {
     val policy = Policy("e-health example") := when ((action.id === "view") & (resource.type_ === "patient-data") 
             & ("physician" in subject.roles)) apply PermitOverrides to (
       Rule("requirement-for-permit") := permit iff (resource.owner_id in subject.treated),
-      defaultDeny
+      Rule("default deny") := deny
     )
 }
 ```
@@ -86,7 +88,7 @@ Quite consice and readable, no? As comparison, here is the XACML representation 
 </Policy>
 ```
 
-For more examples, see the `stapl.core.examples` package.
+For more examples, see the [stapl-examples](https://github.com/maartendecat/stapl-examples) project.
 
 # Features
 
@@ -151,15 +153,18 @@ val pdp = new PDP(policy, finder)
 
 Because STAPL is implemented in Scala, you're best off with writing your policies in Scala. However, the policy evaluation engine can easily be used from Java as well. In theory, Scala classes can directly be used in Java. In practice however, this leads to some annoying boiler-plate code. Therefore we also provide a simple API that wraps the STAPL evaluation engine in a clean Java API, see [https://github.com/maartendecat/stapl-java-api][8].
 
-Here is an example of using the Java API:
+Here is an example of using the Java API (taken from the [examples](https://github.com/maartendecat/stapl-examples/tree/master/src/main/scala/stapl/examples/javaapi)):
 
 ```java
+package stapl.examples.javaapi;
+
+import static stapl.javaapi.pdp.attributevalues.AttributeValueFactory.list;
+import static stapl.javaapi.pdp.attributevalues.AttributeValueFactory.simple;
 import stapl.core.AttributeContainer;
 import stapl.core.Policy;
 import stapl.core.Result;
-import stapl.core.examples.*;
+import stapl.examples.policies.EdocsPolicy;
 import stapl.javaapi.pdp.PDP;
-import static stapl.javaapi.pdp.attributevalues.AttributeValueFactory.*;
 
 public class SimpleExample {
 
@@ -180,7 +185,7 @@ public class SimpleExample {
 		AttributeContainer subject = EdocsPolicy.subject();
 		AttributeContainer resource = EdocsPolicy.resource();
 		AttributeContainer action = EdocsPolicy.action();
-		AttributeContainer env = EdocsPolicy.env();
+		AttributeContainer env = EdocsPolicy.environment();
 		
 		PDP pdp = new PDP(policy);
 		Result result = pdp.evaluate("subject1", "view", "resource1", 
@@ -212,7 +217,7 @@ assert(pdp.evaluate("subject1", "view", "resource1",
 ))
 ```
 
-For elaborate examples of policy testing, see the `scala.core.tests` package.
+For elaborate examples of policy testing, see the tests of [stapl-examples](https://github.com/maartendecat/stapl-examples).
 
 # Logging
 
@@ -284,7 +289,6 @@ For example, add this simple policy to the end of the `App.scala` file generated
 
 ```scala
 import stapl.core._
-import stapl.core.templates._
 
 object ExamplePolicy extends BasicPolicy {
   
@@ -292,7 +296,7 @@ object ExamplePolicy extends BasicPolicy {
 
   val policy = Policy("example policy") := when (action.id === "view") apply PermitOverrides to (
     Rule("permit physicians") := when ("physician" in subject.roles) permit,
-    defaultDeny
+    Rule("default deny") := deny
   )  
 }
 ```
@@ -300,7 +304,6 @@ object ExamplePolicy extends BasicPolicy {
 Explanation:
 
 * The import `stapl.core._` imports the main part of STAPL, such as the `Policy` and `Rule` classes and the implicit conversions of strings and ints to STAPL attributes.
-* The import `stapl.core.templates._` imports some commonly used policy templates, such as `defaultDeny` used in the example policy. If you check it out (see `package.scala` in `stapl.core.templates`), you'll see that this is actually just a `Rule` that always returns Deny. Be sure to check out the other templates and remember that you can define your own templates as well!
 * The `BasicPolicy` class is a convenience class that avoids some boiler-plate code in your own policies. For example, by extending it, you automatically have `subject`, `resource`, `action` and `environment` declared in your scope. 
 * `subject.roles = ListAttribute(String)` declares that subjects have an attribute called `Roles`, that is is multi-valued and that is is of the type `String`. After this declaration, you can use `subject.roles` in your policies.
 * The policy itself is as explained above. As you can see, it's a simple policy that only applies to the action `view`, permits physicians using the `role` attribute and denies all other subjects.
@@ -343,7 +346,10 @@ Some important notes here:
 * Notice that we did not include any `AttributeFinder`s. These can be used to allow the PDP to search for attributes you did not pass with the request at run-time, for example in a database. For more information, take a look [above][11].
 * Notice that the PDP does not just return the decision, but also an empty list. This list contains the obligations which should be fulfilled with enforcing the access decision. It is empty because our example policy did not incorporate any obligations. For examples of obligations, check out the E-health policy in `stapl.core.examples`.
 
-If you want to test the policy more elaborately, see the tests in `src/test/scala/stapl/core` for examples.
+#### 7. Next
+
+Try out some stuff yourself. If you want inspiration, take a look at the more elaborate examples in [stapl-examples](https://github.com/maartendecat/stapl-examples). Also take a look at the policy templates in  [stapl-templates](https://github.com/maartendecat/stapl-templates), they make it even easier for you to specify policies.
+
 
 
   [1]: #getting-started
