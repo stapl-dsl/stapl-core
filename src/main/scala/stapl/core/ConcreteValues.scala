@@ -348,6 +348,7 @@ abstract class BasicValue(private val value: Any, override val aType: AttributeT
 class NumberImpl(value: Either[Long,Double]) extends BasicValue(value, Number) {
   
   // TODO: remove Double for ease of use?
+  //  or remove Long?
   
   override val representation: Any = value match {
     case Left(long) => long

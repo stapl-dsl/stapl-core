@@ -65,7 +65,8 @@ trait Value {
     EqualsValue(this, that)
   }
   
-  // TODO add !==
+  // XXX added !==
+  def !==(that: Value): Expression = !(this === that)
   
   def gt(that: Value): Expression = {
     if (this.isList || that.isList)
