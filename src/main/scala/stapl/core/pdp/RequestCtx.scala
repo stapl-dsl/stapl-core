@@ -43,6 +43,11 @@ class RequestCtx(val subjectId: String, val actionId: String,
   
   val allAttributes: Map[Attribute, ConcreteValue] = Map(
       extraAttributes: _*)    
+      
+  // FIXME: these are not the same subject, resource and action as defined in BasicPolicy
+  // For now, this works because the repeated definitions are the same, but we should'nt replicate
+  // this definition. => idea: create a function to generate the subject, resoruce and action
+  // and use this everwhere where you need subject/resource/action.id
   allAttributes += subject.id -> subjectId
   allAttributes += resource.id -> resourceId
   allAttributes += action.id -> actionId 
