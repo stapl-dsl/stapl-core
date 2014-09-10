@@ -55,6 +55,10 @@ abstract class AbstractPolicy(val id:String) {
   def fqid: String = treePath.reverse.mkString(">") // TODO performance optimization: cache this stuff
 }
 
+
+/**
+ * Represents one rule.
+ */
 class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
     var condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
@@ -82,6 +86,10 @@ class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
   override def toString = s"Policy #$fqid"
 }
 
+
+/**
+ * Represents a policy of one or more rules and/or subpolicies.
+ */
 class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm, 
     val subpolicies: List[AbstractPolicy], val obligations: List[Obligation] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
@@ -138,14 +146,14 @@ class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm,
  *  
  * FIXME the "policy" in this line should not be possible:
  * 	Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
+ *  ====== Why not? ======
+ *  
+ * TODO does a rule need a target?
  */
-class OnlyId(private val id: String) {
+class OnlyIdRule(private val id: String) {
   
   def :=(t: TargetEffectConditionAndObligationActions): Rule =
     new Rule(id)(t.target, t.effect, t.condition, List(t.obligationActions: _*))
-    
-  def :=(t: TargetPCASubpoliciesAndObligations): Policy =
-    new Policy(id)(t.target, t.pca, t.subpolicies, t.obligations)
 	
   def :=(t: TargetEffectAndCondition): Rule =
     new Rule(id)(t.target, t.effect, t.condition)
@@ -160,10 +168,16 @@ class OnlyId(private val id: String) {
     case `deny` => new Rule(id)(AlwaysTrue, Deny)
     case `permit` => new Rule(id)(AlwaysTrue, Permit)
   }
+    
+}
+
+class OnlyIdPolicy(private val id: String) {
   
+  def :=(t: TargetPCASubpoliciesAndObligations): Policy =
+    new Policy(id)(t.target, t.pca, t.subpolicies, t.obligations)
+    
   def :=(t: TargetPCAAndSubpolicies): Policy =
     new Policy(id)(t.target, t.pca, List(t.subpolicies: _*))
-    
 }
 
 class ObligationActionWithOn(val obligationAction: ObligationAction) {
@@ -268,11 +282,11 @@ object iff {
   def apply(condition: Expression): Expression =
     condition
 }
-object Rule { // not really a companion object of Policy, but the start of the natural DSL for policies
+object Rule { // not really a companion object of Rule, but the start of the natural DSL for policies
   def apply(id: String) =
-    new OnlyId(id)
+    new OnlyIdRule(id)
 }
 object Policy {
   def apply(id: String) =
-    new OnlyId(id)
+    new OnlyIdPolicy(id)
 }

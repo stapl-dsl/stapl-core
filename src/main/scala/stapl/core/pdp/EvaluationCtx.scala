@@ -40,12 +40,17 @@ trait EvaluationCtx {
   def resourceId: String
   def actionId: String
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
+  
+  // TODO add type checking here
+  //final def findAttribute(attribute: Attribute): ConcreteValue = 
 }
 
 /**
  * An implementation of a basic evaluation context. This evaluation context
  * stores the subject id, the resource id, the action id and stores found
  * attribute values in a cache for this evaluation context. 
+ * 
+ * TODO move caching to separate EvaluationCtx implementation?
  */
 class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, 
     finder: AttributeFinder) extends EvaluationCtx with Logging {

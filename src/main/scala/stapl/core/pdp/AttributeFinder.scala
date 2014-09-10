@@ -20,7 +20,6 @@
 package stapl.core.pdp
 
 import scala.annotation.tailrec
-import scala.reflect.runtime.universe._
 import stapl.core.Attribute
 import stapl.core.AttributeContainerType
 import stapl.core.AttributeNotFoundException
@@ -62,10 +61,8 @@ sealed class AttributeFinder {
    * Tries to find the value of a certain attribute in the given evaluation context.
    * 
    * @throws	AttributeNotFoundException	If the attribute value isn't found
-   * @throws	TypeCheckException 	If the type of the found value doesn't conform to the declared type of the attribute
    */
   @throws[AttributeNotFoundException]("if the attribute value isn't found")
-  @throws[TypeCheckException]("if the type of the found value doesn't conform to the declared type of the attribute")
   def find(ctx: EvaluationCtx, attribute: Attribute): ConcreteValue = {
     @tailrec
     def find(modules: Modules): ConcreteValue = modules match {

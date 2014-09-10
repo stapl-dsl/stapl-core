@@ -30,6 +30,7 @@ case class Obligation(val action: ObligationAction, val fulfillOn: Effect)
  */
 abstract class ObligationAction // TODO better name for this? very long...
 
+// TODO PDP needs to evaluate msg to a ConcreteValue before passing it on to PEP
 case class LogObligationAction(val msg: Value) extends ObligationAction
 object log {
   def apply(msg: Value) = new LogObligationAction(msg)

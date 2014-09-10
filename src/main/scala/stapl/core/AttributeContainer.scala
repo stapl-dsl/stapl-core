@@ -30,7 +30,9 @@ class AttributeDeclarationException(message: String = null, cause: Throwable = n
  * in most STAPL policies.
  * 
  * By extending Dynamic, we can assign attributes to this attribute container as a variable. For example:
- * subject.roles = ListAttribute(String) -> subjct.set("roles", ListAttribute(String))
+ * subject.roles = ListAttribute(String) -> subject.set("roles", ListAttribute(String))
+ * 
+ * TODO mechanism is needed so attribute types are known (to the compiler) at compile time
  */
 class AttributeContainer private(cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
 
