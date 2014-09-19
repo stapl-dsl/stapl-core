@@ -27,3 +27,5 @@ class TypeCheckException(message: String) extends RuntimeException(message) {
 class AttributeNotFoundException(attribute: Attribute) extends RuntimeException(s"$attribute wasn't found.")
 
 class AttributeDoesNotExistException(name: String) extends RuntimeException(s"No attribute with name '$name' has been defined.")
+
+class RemotePolicyNotFoundException(policyId: String) extends RuntimeException(s"The remote policy with id $policyId wasn't found.")

@@ -29,16 +29,27 @@ import stapl.core.Result
  * Class used for representing a policy decision point (PDP). A PDP provides
  * access decisions by evaluating a policy.
  */
-class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
+class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvaluator: RemoteEvaluator) {
 
   private val timestampGenerator = new SimpleTimestampGenerator
 
   /**
    * Set up this new PDP with an empty attribute finder (which does not find
+   * any attributes) and empty remote evaluator.
+   */
+  def this(policy: AbstractPolicy) = this(policy, new AttributeFinder, new RemoteEvaluator)
+  
+  /**
+   * Set up this new PDP with an empty attribute finder (which does not find
    * any attributes).
    */
-  def this(policy: AbstractPolicy) = this(policy, new AttributeFinder)
+  def this(policy: AbstractPolicy, remoteEvaluator: RemoteEvaluator) = this(policy, new AttributeFinder, remoteEvaluator)
 
+  /**
+   * Set up this new PDP with an empty remote evaluator.
+   */
+  def this(policy: AbstractPolicy, attributeFinder: AttributeFinder) = this(policy, attributeFinder, new RemoteEvaluator)
+  
   /**
    * Evaluate the policy of this PDP with given subject id, action id, resource id
    * and possibly extra attributes and return the result.
@@ -53,14 +64,14 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder) {
    * evaluation id and return the result. This will employ the attribute finder of this PDP.
    */
   def evaluate(ctx: RequestCtx): Result =
-    evaluate(new BasicEvaluationCtx(timestampGenerator.getTimestamp, ctx, attributeFinder))
+    evaluate(new BasicEvaluationCtx(timestampGenerator.getTimestamp, ctx, attributeFinder, remoteEvaluator))
 
   /**
    * Evaluate the policy of this PDP with given evaluation id and request context
    * and return the result. This will employ the attribute finder of this PDP.
    */
   def evaluate(evaluationId: Long, ctx: RequestCtx): Result =
-    evaluate(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder))
+    evaluate(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
 
   /**
    * Evaluate the policy of this PDP with given evaluation context and return

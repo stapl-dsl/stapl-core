@@ -36,7 +36,7 @@ abstract class AbstractPolicy(val id:String) {
   
   def isApplicable(ctx: EvaluationCtx): Boolean
   
-  def allIds: List[String]
+  //def allIds: List[String]
   
   /**
    * Returns the ordered list of all ids from the top of the policy tree
@@ -81,7 +81,7 @@ class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
   
   override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
   
-  override def allIds: List[String] = List(id)
+  //override def allIds: List[String] = List(id)
   
   override def toString = s"Policy #$fqid"
 }
@@ -100,11 +100,11 @@ class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm,
   require(!subpolicies.isEmpty, "A PolicySet needs at least one SubPolicy")
   //require(uniqueIds, "All policies require a unique ID")
   
-  private def uniqueIds(): Boolean = {
+  /*private def uniqueIds(): Boolean = {
     val ids = allIds
     val distinctIds = ids.distinct
     distinctIds.size == ids.size
-  }
+  }*/
   
   override def evaluate(ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of PolicySet #$fqid")
@@ -123,12 +123,40 @@ class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm,
   
   override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
   
-  override def allIds: List[String] = id :: subpolicies.flatMap(_.allIds)
+  //override def allIds: List[String] = id :: subpolicies.flatMap(_.allIds)
   
   override def toString = {
     val subs = subpolicies.toString
     s"PolicySet #$id = [${subs.substring(5, subs.length-1)}]"
   }
+}
+
+/**
+ * Represents a reference to a policy that resides at a remote location and should be evaluated
+ * at that remote location.
+ * 
+ * TODO Do remote policy references reference the id or the fqid?
+ */
+case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with Logging {
+  
+  override def evaluate(ctx: EvaluationCtx): Result = {
+    debug(s"FLOW: starting evaluation of Remote Policy #$fqid (evaluation id #${ctx.evaluationId})")
+    val result = ctx.remoteEvaluator.findAndEvaluate(id, ctx)
+    // TODO Filter obligations?
+    debug(s"FLOW: Remote Policy #$fqid returned $result")
+    result
+  }
+  
+  /**
+   * This method shouldn't be called during the evaluation of this policy, but an implementation is 
+   * provided for the case where one would like to know whether a policy is applicable in a certain 
+   * EvalutionCtx without evaluating it (???).
+   */
+  override def isApplicable(ctx: EvaluationCtx): Boolean = {
+    warn("We are checking whether a remote policy is applicable without evaluating the policy. Are you sure this is what you want to do?")
+    ctx.remoteEvaluator.findAndIsApplicable(id, ctx)
+  }
+  
 }
 
 

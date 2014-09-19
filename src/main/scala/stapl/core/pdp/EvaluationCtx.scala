@@ -39,6 +39,7 @@ trait EvaluationCtx {
   def subjectId: String
   def resourceId: String
   def actionId: String
+  def remoteEvaluator: RemoteEvaluator
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
   
   // TODO add type checking here
@@ -53,7 +54,7 @@ trait EvaluationCtx {
  * TODO move caching to separate EvaluationCtx implementation?
  */
 class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, 
-    finder: AttributeFinder) extends EvaluationCtx with Logging {
+    finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator) extends EvaluationCtx with Logging {
   
   override val subjectId: String = request.subjectId
   

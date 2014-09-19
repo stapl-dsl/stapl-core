@@ -36,27 +36,8 @@ import stapl.core.TypeCheckException
  * connect to a certain attribute value source, such as a hard-coded list, a file or
  * a database.
  */
-sealed class AttributeFinder {
-  type Modules = List[AttributeFinderModule]
-  private var _modules: Modules = Nil
-  
-  def modules : Modules = _modules
-  def modules_=(modules: Modules) {
-    _modules = modules
-  }
-  
-  /**
-   * Add an attribute finder module to this attribute finder.
-   */
-  def addModule(module: AttributeFinderModule) {
-    _modules = module :: _modules
-  }
-  
-  /**
-   * Short notation for adding attribute finder modules.
-   */
-  def +=(module: AttributeFinderModule) = addModule(module)
-  
+sealed class AttributeFinder extends Modules[AttributeFinderModule] {
+
   /**
    * Tries to find the value of a certain attribute in the given evaluation context.
    * 
@@ -65,14 +46,14 @@ sealed class AttributeFinder {
   @throws[AttributeNotFoundException]("if the attribute value isn't found")
   def find(ctx: EvaluationCtx, attribute: Attribute): ConcreteValue = {
     @tailrec
-    def find(modules: Modules): ConcreteValue = modules match {
+    def find(modules: List[AttributeFinderModule]): ConcreteValue = modules match {
       case module :: tail => module.find(ctx, attribute) match {
         case Some(result) => result
         case None => find(tail)
       }
       case Nil => throw new AttributeNotFoundException(attribute)
     }
-    find(_modules)
+    find(modules)
   }
 }
 
