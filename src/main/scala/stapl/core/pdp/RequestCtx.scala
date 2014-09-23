@@ -26,6 +26,10 @@ import stapl.core.action
 import stapl.core.Attribute
 import stapl.core.ConcreteValue
 import stapl.core.string2Value
+import stapl.core.AttributeContainerType
+import stapl.core.SUBJECT
+import stapl.core.RESOURCE
+import stapl.core.ACTION
 
 /**
  * A class used for representing the context of a request.
@@ -41,17 +45,22 @@ import stapl.core.string2Value
 class RequestCtx(val subjectId: String, val actionId: String, 
     val resourceId: String, extraAttributes: (Attribute,ConcreteValue)*) {
   
-  val allAttributes: Map[Attribute, ConcreteValue] = Map(
-      extraAttributes: _*)    
+  /*def this(subjectId: String, actionId: String, resourceId: String, extraAttributes: (Attribute,ConcreteValue)*) {
+    this(subjectId, actionId, resourceId, extraAttributes.map{ case (attr, c) => ((attr.name, attr.cType), c) }: _*)
+  }*/
+  
+  // TODO this is getting ugly(er)
+  val allAttributes: Map[(String, AttributeContainerType), ConcreteValue] = Map(
+      extraAttributes.map{ case (attr, c) => ((attr.name, attr.cType), c) }: _*)    
       
   // FIXME: these are not the same subject, resource and action as defined in BasicPolicy
   // For now, this works because the repeated definitions are the same, but we should'nt replicate
   // this definition. => idea: create a function to generate the subject, resoruce and action
   // and use this everwhere where you need subject/resource/action.id
-  allAttributes += subject.id -> subjectId
-  allAttributes += resource.id -> resourceId
-  allAttributes += action.id -> actionId 
+  allAttributes += ("id", SUBJECT) -> subjectId
+  allAttributes += ("id", RESOURCE) -> resourceId
+  allAttributes += ("id", ACTION) -> actionId 
   
-  override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.extraAttributes}" 
+  override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.allAttributes}" 
       
 }

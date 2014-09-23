@@ -22,6 +22,7 @@ package stapl.core.pdp
 import grizzled.slf4j.Logging
 import stapl.core.ConcreteValue
 import stapl.core.Attribute
+import stapl.core.AttributeContainerType
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -49,9 +50,7 @@ trait EvaluationCtx {
 /**
  * An implementation of a basic evaluation context. This evaluation context
  * stores the subject id, the resource id, the action id and stores found
- * attribute values in a cache for this evaluation context. 
- * 
- * TODO move caching to separate EvaluationCtx implementation?
+ * attribute values in a cache for this evaluation context.
  */
 class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx, 
     finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator) extends EvaluationCtx with Logging {
@@ -62,7 +61,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   
   override val actionId: String = request.actionId
   
-  final val cachedAttributes: scala.collection.mutable.Map[Attribute,ConcreteValue] = request.allAttributes
+  final val cachedAttributes: scala.collection.mutable.Map[(String, AttributeContainerType),ConcreteValue] = request.allAttributes
                             
   /**
    * Try to find the value of the given attribute. If the value is already
@@ -71,14 +70,15 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
    * a value is found.
    */
   override def findAttribute(attribute: Attribute): ConcreteValue = {
-    cachedAttributes.get(attribute) match {
+    val key = (attribute.name, attribute.cType)
+    cachedAttributes.get(key) match {
       case Some(value) => {
         debug("FLOW: found value of " + attribute + " in cache: " + value)
         value
       }
       case None => { // Not in the cache
         val value: ConcreteValue = finder.find(this, attribute)
-        cachedAttributes(attribute) = value // add to cache
+        cachedAttributes(key) = value // add to cache
         debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
         value
       }
