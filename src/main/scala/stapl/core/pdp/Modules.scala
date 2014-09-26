@@ -8,9 +8,9 @@ trait Modules[T] {
   private var _modules: List[T] = Nil
   
   def modules : List[T] = _modules
-  def modules_=(modules: List[T]) {
+  /*def modules_=(modules: List[T]) {
     _modules = modules
-  }
+  }*/
   
   /**
    * Add a module.
