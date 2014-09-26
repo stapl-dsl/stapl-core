@@ -23,6 +23,7 @@ import grizzled.slf4j.Logging
 import stapl.core.ConcreteValue
 import stapl.core.Attribute
 import stapl.core.AttributeContainerType
+import stapl.core.AttributeNotFoundException
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -77,10 +78,19 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
         value
       }
       case None => { // Not in the cache
-        val value: ConcreteValue = finder.find(this, attribute)
-        cachedAttributes(key) = value // add to cache
-        debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
-        value
+        try{
+          val value: ConcreteValue = finder.find(this, attribute)
+          cachedAttributes(key) = value // add to cache
+          debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
+          value
+        } catch {
+          case e: AttributeNotFoundException => 
+            warn(s"Didn't find value of $attribute anywhere, exception thrown")
+            throw e
+          case e: Exception =>
+            error(s"Unknown exception thrown: $e")
+            throw e
+        }
       }
     }
   }
