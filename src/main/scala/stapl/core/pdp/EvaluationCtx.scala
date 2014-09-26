@@ -85,10 +85,10 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
           value
         } catch {
           case e: AttributeNotFoundException => 
-            warn(s"Didn't find value of $attribute anywhere, exception thrown")
+            debug(s"Didn't find value of $attribute anywhere, exception thrown")
             throw e
           case e: Exception =>
-            error(s"Unknown exception thrown: $e")
+            debug(s"Unknown exception thrown: $e")
             throw e
         }
       }
