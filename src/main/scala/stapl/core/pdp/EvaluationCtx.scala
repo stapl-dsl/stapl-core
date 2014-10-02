@@ -42,6 +42,7 @@ trait EvaluationCtx {
   def resourceId: String
   def actionId: String
   def remoteEvaluator: RemoteEvaluator
+  def attributes: Seq[((String, AttributeContainerType),ConcreteValue)]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
   
   // TODO add type checking here
@@ -63,6 +64,8 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   override val actionId: String = request.actionId
   
   final val cachedAttributes: scala.collection.mutable.Map[(String, AttributeContainerType),ConcreteValue] = request.allAttributes
+  
+  override def attributes = cachedAttributes.toSeq
                             
   /**
    * Try to find the value of the given attribute. If the value is already
