@@ -296,6 +296,9 @@ object apply {
   
   def DenyOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies = 
     new TargetPCAAndSubpolicies(AlwaysTrue,stapl.core.DenyOverrides, subpolicies.subpolicies: _*)
+  
+  def FirstApplicable(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies = 
+    new TargetPCAAndSubpolicies(AlwaysTrue,stapl.core.FirstApplicable, subpolicies.subpolicies: _*)
 }
 class OnlySubpolicies(val subpolicies: AbstractPolicy*)
 object to {
