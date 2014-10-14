@@ -45,7 +45,6 @@
 			<groupId>org.joda</groupId>
 			<artifactId>joda-convert</artifactId>
 			<version>1.7</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
