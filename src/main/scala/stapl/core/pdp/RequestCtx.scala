@@ -49,17 +49,15 @@ class RequestCtx(val subjectId: String, val actionId: String,
     this(subjectId, actionId, resourceId, extraAttributes.map{ case (attr, c) => ((attr.name, attr.cType), c) }: _*)
   }*/
   
-  // TODO this is getting ugly(er)
-  val allAttributes: Map[(String, AttributeContainerType), ConcreteValue] = Map(
-      extraAttributes.map{ case (attr, c) => ((attr.name, attr.cType), c) }: _*)    
+  val allAttributes: Map[Attribute, ConcreteValue] = Map(extraAttributes: _*)    
       
   // FIXME: these are not the same subject, resource and action as defined in BasicPolicy
   // For now, this works because the repeated definitions are the same, but we should'nt replicate
   // this definition. => idea: create a function to generate the subject, resoruce and action
   // and use this everwhere where you need subject/resource/action.id
-  allAttributes += ("id", SUBJECT) -> subjectId
-  allAttributes += ("id", RESOURCE) -> resourceId
-  allAttributes += ("id", ACTION) -> actionId 
+  allAttributes += stapl.core.subject.id -> subjectId
+  allAttributes += stapl.core.resource.id -> resourceId
+  allAttributes += stapl.core.action.id -> actionId 
   
   override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.allAttributes}" 
       

@@ -42,7 +42,7 @@ trait EvaluationCtx {
   def resourceId: String
   def actionId: String
   def remoteEvaluator: RemoteEvaluator
-  def attributes: Seq[((String, AttributeContainerType),ConcreteValue)]
+  def cachedAttributes: scala.collection.mutable.Map[Attribute,ConcreteValue]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
   
   // TODO add type checking here
@@ -63,9 +63,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   
   override val actionId: String = request.actionId
   
-  final val cachedAttributes: scala.collection.mutable.Map[(String, AttributeContainerType),ConcreteValue] = request.allAttributes
-  
-  override def attributes = cachedAttributes.toSeq
+  override val cachedAttributes = request.allAttributes
                             
   /**
    * Try to find the value of the given attribute. If the value is already
@@ -74,8 +72,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
    * a value is found.
    */
   override def findAttribute(attribute: Attribute): ConcreteValue = {
-    val key = (attribute.name, attribute.cType)
-    cachedAttributes.get(key) match {
+    cachedAttributes.get(attribute) match {
       case Some(value) => {
         debug("FLOW: found value of " + attribute + " in cache: " + value)
         value
@@ -83,7 +80,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
       case None => { // Not in the cache
         try{
           val value: ConcreteValue = finder.find(this, attribute)
-          cachedAttributes(key) = value // add to cache
+          cachedAttributes(attribute) = value // add to cache
           debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
           value
         } catch {
