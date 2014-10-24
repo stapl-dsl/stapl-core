@@ -90,7 +90,7 @@ class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
 /**
  * Represents a policy of one or more rules and/or subpolicies.
  */
-class Policy(id: String)(val target: Expression, val pca: CombinationAlgorithm, 
+class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: CombinationAlgorithm, 
     val subpolicies: List[AbstractPolicy], val obligations: List[Obligation] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
