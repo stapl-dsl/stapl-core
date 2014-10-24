@@ -60,7 +60,7 @@ abstract class AbstractPolicy(val id:String) {
  * Represents one rule.
  */
 class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
-    var condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
+    val condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
   override def evaluate(ctx:EvaluationCtx): Result = {
