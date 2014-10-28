@@ -74,6 +74,8 @@ class AttributeContainer private(cType: AttributeContainerType, attributes: Map[
     refinements += refinement
     refinement
   }
+  
+  def allAttributes: Seq[Attribute] = attributes.values.toSeq
 }
 
 /**
