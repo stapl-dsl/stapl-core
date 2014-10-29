@@ -33,7 +33,7 @@ object PermitOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligationActions) => decision match {
+        case Result(decision, obligationActions, _) => decision match {
           // If a subpolicy returns Permit: return this result with its obligations,
           //	do not evaluate the rest for other obligations. 
           // TODO is this correct?
@@ -59,7 +59,7 @@ object DenyOverrides extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligationActions) => decision match {
+        case Result(decision, obligationActions, _) => decision match {
           // If a subpolicy returns Deny: return this result with its obligations,
           //	do not evaluate the rest for other obligations. 
           // TODO is this correct?
@@ -85,7 +85,7 @@ object FirstApplicable extends CombinationAlgorithm {
     @tailrec
     def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
       case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligations) => decision match {
+        case Result(decision, obligations, _) => decision match {
           // Pass the decision and obligations of the first Permit or Deny
           case Permit => Result(decision, obligations)
           case Deny => Result(decision, obligations)

@@ -19,11 +19,15 @@
  */
 package stapl.core
 
+import scala.collection.mutable.Map
+
 /**
  * Class used for representing the result of a policy evaluation by a PDP.
  * A result contains a decision and possibly obligation actions to be fulfilled.
  */
-case class Result(val decision: Decision, val obligationActions: List[ObligationAction] = List.empty)
+case class Result(val decision: Decision, 
+    val obligationActions: List[ObligationAction] = List.empty, 
+    val employedAttributes: Map[Attribute,ConcreteValue] = Map())
 
 /**
  * Trait for representing a Decision ( = Permit, Deny or NotApplicable).

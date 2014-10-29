@@ -78,5 +78,10 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvalua
    * the result.
    * This allows you to specify another attribute finder than the one of this PDP.
    */
-  def evaluate(ctx: EvaluationCtx): Result = policy.evaluate(ctx)
+  def evaluate(ctx: EvaluationCtx): Result = {
+    val result = policy.evaluate(ctx)
+    // append the employed attributes: these are the cached attributes
+    result.employedAttributes ++= ctx.cachedAttributes
+    result
+  }
 }
