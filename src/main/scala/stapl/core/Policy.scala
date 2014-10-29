@@ -59,7 +59,7 @@ abstract class AbstractPolicy(val id:String) {
 /**
  * Represents one rule.
  */
-class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect, 
+class Rule(id: String)(val effect: Effect, 
     val condition: Expression=AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty) 
 	extends AbstractPolicy(id) with Logging {
   
@@ -79,7 +79,7 @@ class Rule(id: String)(val target: Expression=AlwaysTrue, val effect: Effect,
     }
   }
   
-  override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
+  override def isApplicable(ctx: EvaluationCtx): Boolean = true
   
   //override def allIds: List[String] = List(id)
   
@@ -180,21 +180,15 @@ case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with
  */
 class OnlyIdRule(private val id: String) {
   
-  def :=(t: TargetEffectConditionAndObligationActions): Rule =
-    new Rule(id)(t.target, t.effect, t.condition, List(t.obligationActions: _*))
+  def :=(t: EffectConditionAndObligationActions): Rule =
+    new Rule(id)(t.effect, t.condition, List(t.obligationActions: _*))
 	
-  def :=(t: TargetEffectAndCondition): Rule =
-    new Rule(id)(t.target, t.effect, t.condition)
-    
-  def :=(targetAndEffect: TargetAndEffect): Rule = 
-    new Rule(id)(targetAndEffect.target, targetAndEffect.effect)
-    
-  def :=(onlyTarget: OnlyTarget): TargetAndId =
-    new TargetAndId(id, onlyTarget.target)
+  def :=(t: EffectAndCondition): Rule =
+    new Rule(id)(t.effect, t.condition)
  
   def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
-    case `deny` => new Rule(id)(AlwaysTrue, Deny)
-    case `permit` => new Rule(id)(AlwaysTrue, Permit)
+    case `deny` => new Rule(id)(Deny)
+    case `permit` => new Rule(id)(Permit)
   }
     
 }
@@ -214,43 +208,32 @@ class ObligationActionWithOn(val obligationAction: ObligationAction) {
     new Obligation(obligationAction, effect)
 }
 
-class TargetEffectAndCondition(val target: Expression, val effect: Effect, val condition: Expression) {
+class EffectAndCondition(val effect: Effect, val condition: Expression) {
   
-  def performing(obligationActions: ObligationAction*): TargetEffectConditionAndObligationActions = 
-    new TargetEffectConditionAndObligationActions(target, effect, condition, obligationActions: _*)
+  def performing(obligationActions: ObligationAction*): EffectConditionAndObligationActions = 
+    new EffectConditionAndObligationActions(effect, condition, obligationActions: _*)
 }
 
-class TargetEffectConditionAndObligationActions(val target: Expression, 
+class EffectConditionAndObligationActions( 
     val effect: Effect, val condition: Expression, val obligationActions: ObligationAction*)
 
-class TargetAndEffect(val target: Expression, val effect: Effect) {
-  
-  def iff(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(target, effect, condition)
-}
+
 class EffectKeyword // FIXME this cannot be the best way to do this...
 case object deny extends EffectKeyword {
   /**
    * Needed if no target is given
    */
-  def iff(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(AlwaysTrue, Deny, condition)
+  def iff(condition: Expression): EffectAndCondition =
+    new EffectAndCondition(Deny, condition)
 }
 case object permit extends EffectKeyword {  
   /**
    * Needed if no target is given
    */
-  def iff(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(AlwaysTrue, Permit, condition)
+  def iff(condition: Expression): EffectAndCondition =
+    new EffectAndCondition(Permit, condition)
 }
-class TargetAndId(val id: String, val target: Expression) {
-  
-  def permit: Rule =
-    new Rule(id)(target, Permit)
-  
-  def deny: Rule =
-    new Rule(id)(target, Deny)
-}
+
 
 class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) {
   
@@ -268,12 +251,6 @@ class TargetAndPCA(val target: Expression, val pca: CombinationAlgorithm) {
 }
 
 class OnlyTarget(val target: Expression) {
-  
-  def permit(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(target, Permit, condition)
-  
-  def deny(condition: Expression): TargetEffectAndCondition =
-    new TargetEffectAndCondition(target, Deny, condition)
   
   def apply(pca: CombinationAlgorithm): TargetAndPCA =
     new TargetAndPCA(target, pca)
