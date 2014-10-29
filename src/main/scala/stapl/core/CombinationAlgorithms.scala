@@ -23,78 +23,86 @@ import scala.annotation.tailrec
 import stapl.core.pdp.EvaluationCtx
 
 trait CombinationAlgorithm {
-  
+
   def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result
 }
 
 object PermitOverrides extends CombinationAlgorithm {
-  
+
   override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
-    @tailrec
-    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
-      case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligationActions, _) => decision match {
-          // If a subpolicy returns Permit: return this result with its obligations,
-          //	do not evaluate the rest for other obligations. 
-          // TODO is this correct?
-          // If all subpolicies return Deny: combine all their obligations and return 
-          // 	them with Deny
-          // If all subpolicies return NotApplicable: return NotApplicable without obligations
-          // See XACML2 specs, Section 7.14
-          case Permit => Result(decision, obligationActions) 				 
-          case Deny => combine(rest, Result(Deny, tempResult.obligationActions ::: obligationActions)) 
-          case NotApplicable => combine(rest, tempResult) 			
-        } 
+
+    var tmpResult = Result(NotApplicable)
+
+    for (policy <- policies) {
+      val Result(decision, obligationActions, _) = policy.evaluate(ctx)
+      // If a subpolicy returns Permit: return this result with its obligations,
+      //	do not evaluate the rest for other obligations. 
+      // TODO is this correct?
+      // If all subpolicies return Deny: combine all their obligations and return 
+      // 	them with Deny
+      // If all subpolicies return NotApplicable: return NotApplicable without obligations
+      // See XACML2 specs, Section 7.14
+      decision match {
+        case Permit => 
+          // we only need one Permit and only retain those obligations => jump out of the loop
+          return Result(decision, obligationActions) 
+        case Deny =>
+          // retain all obligations of previous Denies
+          tmpResult = Result(Deny, tmpResult.obligationActions ::: obligationActions)
+        case NotApplicable => // nothing to do
       }
-      case Nil => tempResult
     }
-    
-    combine(policies, NotApplicable)
+    // if we got here: return the tmpResult with Deny or NotApplicable
+    tmpResult
   }
 }
 
 object DenyOverrides extends CombinationAlgorithm {
-  
+
   override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
-    @tailrec
-    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
-      case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligationActions, _) => decision match {
-          // If a subpolicy returns Deny: return this result with its obligations,
-          //	do not evaluate the rest for other obligations. 
-          // TODO is this correct?
-          // If all subpolicies return Permit: combine all their obligations and return 
-          // 	them with Permit
-          // If all subpolicies return NotApplicable: return NotApplicable without obligations
-          // See XACML2 specs, Section 7.14
-	        case Deny => Result(decision, obligationActions)
-	        case Permit => combine(rest, Result(Permit, tempResult.obligationActions ::: obligationActions))
-	        case NotApplicable => combine(rest, tempResult)
-        }
+
+    var tmpResult = Result(NotApplicable)
+
+    for (policy <- policies) {
+      val Result(decision, obligationActions, _) = policy.evaluate(ctx)
+      // If a subpolicy returns Deny: return this result with its obligations,
+      //	do not evaluate the rest for other obligations. 
+      // TODO is this correct?
+      // If all subpolicies return Permit: combine all their obligations and return 
+      // 	them with Permit
+      // If all subpolicies return NotApplicable: return NotApplicable without obligations
+      // See XACML2 specs, Section 7.14
+      decision match {
+        case Deny => 
+          // we only need one Deny and only retain those obligations => jump out of the loop
+          return Result(decision, obligationActions) 
+        case Permit =>
+          // retain all obligations of previous Permits
+          tmpResult = Result(Permit, tmpResult.obligationActions ::: obligationActions)
+        case NotApplicable => // nothing to do
       }
-      case Nil => tempResult
     }
-    
-    combine(policies, NotApplicable)
+    // if we got here: return the tmpResult with Permit or NotApplicable
+    tmpResult
   }
 }
 
 object FirstApplicable extends CombinationAlgorithm {
-  
+
   override def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result = {
-    @tailrec
-    def combine(policyList: List[AbstractPolicy], tempResult: Result): Result = policyList match {
-      case policy :: rest => policy.evaluate(ctx) match {
-        case Result(decision, obligations, _) => decision match {
-          // Pass the decision and obligations of the first Permit or Deny
-          case Permit => Result(decision, obligations)
-          case Deny => Result(decision, obligations)
-          case NotApplicable => combine(rest, NotApplicable)
-        }
+
+    var tmpResult = Result(NotApplicable)
+
+    for (policy <- policies) {
+      val Result(decision, obligationActions, _) = policy.evaluate(ctx)
+      decision match {
+        case Permit | Deny => 
+          // we only need one Deny or Permit and only retain those obligations => jump out of the loop
+          return Result(decision, obligationActions) 
+        case NotApplicable => // nothing to do
       }
-      case Nil => tempResult
     }
-    
-    combine(policies, NotApplicable)
+    // if we got here: return the tmpResult with Permit or NotApplicable
+    tmpResult
   }
 }
