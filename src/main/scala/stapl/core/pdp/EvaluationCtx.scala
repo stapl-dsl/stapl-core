@@ -63,8 +63,7 @@ trait EvaluationCtx {
  * attribute values in a cache for this evaluation context.
  */
 class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
-  finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator,
-  algos: CombinationAlgorithmImplementationBundle = SimpleCombinationAlgorithmImplementationBundle) extends EvaluationCtx with Logging {
+  finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator) extends EvaluationCtx with Logging {
 
   override val subjectId: String = request.subjectId
 
@@ -115,8 +114,8 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
    * Return the implementation of the requested combination algorithm.
    */
   def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation = algo match {
-      case PermitOverrides => algos.PermitOverrides
-      case DenyOverrides => algos.DenyOverrides
-      case FirstApplicable => algos.FirstApplicable
+      case PermitOverrides => SimpleCombinationAlgorithmImplementationBundle.PermitOverrides
+      case DenyOverrides => SimpleCombinationAlgorithmImplementationBundle.DenyOverrides
+      case FirstApplicable => SimpleCombinationAlgorithmImplementationBundle.FirstApplicable
     }
 }
