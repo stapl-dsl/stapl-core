@@ -20,6 +20,8 @@
 package stapl.core
 
 import stapl.core.pdp.EvaluationCtx
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 sealed abstract class Operation extends Value
 
@@ -43,6 +45,16 @@ case class Addition(left: Value, right: Value) extends Operation {
     
     leftValue.add(rightValue)
   }
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = {
+    val leftValue = left.getConcreteValueAsync(ctx)
+    val rightValue = right.getConcreteValueAsync(ctx)
+    
+    for {
+      l <- leftValue
+      r <- rightValue
+    } yield l.add(r)
+  }
 }
 
 case class Subtraction(left: Value, right: Value) extends Operation {
@@ -64,6 +76,16 @@ case class Subtraction(left: Value, right: Value) extends Operation {
     val rightValue = right.getConcreteValue(ctx)
     
     leftValue.subtract(rightValue)
+  }
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = {
+    val leftValue = left.getConcreteValueAsync(ctx)
+    val rightValue = right.getConcreteValueAsync(ctx)
+    
+    for {
+      l <- leftValue
+      r <- rightValue
+    } yield l.subtract(r)
   }
 }
 
@@ -87,6 +109,16 @@ case class Multiplication(left: Value, right: Value) extends Operation {
     
     leftValue.multiply(rightValue)
   }
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = {
+    val leftValue = left.getConcreteValueAsync(ctx)
+    val rightValue = right.getConcreteValueAsync(ctx)
+    
+    for {
+      l <- leftValue
+      r <- rightValue
+    } yield l.multiply(r)
+  }
 }
 
 case class Division(left: Value, right: Value) extends Operation {
@@ -109,6 +141,16 @@ case class Division(left: Value, right: Value) extends Operation {
     
     leftValue.divide(rightValue)
   }
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = {
+    val leftValue = left.getConcreteValueAsync(ctx)
+    val rightValue = right.getConcreteValueAsync(ctx)
+    
+    for {
+      l <- leftValue
+      r <- rightValue
+    } yield l.divide(r)
+  }
 }
 
 case class AbsoluteValue(value: Value) extends Operation {
@@ -128,5 +170,13 @@ case class AbsoluteValue(value: Value) extends Operation {
     val cValue = value.getConcreteValue(ctx)
     
     cValue.abs()
+  }
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = {
+    val cValue = value.getConcreteValueAsync(ctx)
+    
+    for {
+      c <- cValue
+    } yield c.abs()
   }
 }

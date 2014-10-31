@@ -31,6 +31,10 @@ import stapl.core.CombinationAlgorithm
 import stapl.core.CombinationAlgorithmImplementation
 import stapl.core.CombinationAlgorithmImplementationBundle
 import stapl.core.SimpleCombinationAlgorithmImplementationBundle
+import scala.concurrent.Future
+import scala.concurrent.blocking
+import scala.concurrent.ExecutionContext.Implicits.global
+import stapl.core.CombinationAlgorithmImplementationBundle
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -51,6 +55,7 @@ trait EvaluationCtx {
   def remoteEvaluator: RemoteEvaluator
   def cachedAttributes: Map[Attribute, ConcreteValue]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
+  protected[core] def findAttributeAsync(attribute: Attribute): Future[ConcreteValue]
   protected[core] def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation
 
   // TODO add type checking here
@@ -63,7 +68,8 @@ trait EvaluationCtx {
  * attribute values in a cache for this evaluation context.
  */
 class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
-  finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator) extends EvaluationCtx with Logging {
+  finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator,
+  bundle: CombinationAlgorithmImplementationBundle = SimpleCombinationAlgorithmImplementationBundle) extends EvaluationCtx with Logging {
 
   override val subjectId: String = request.subjectId
 
@@ -71,7 +77,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
 
   override val actionId: String = request.actionId
 
-  protected val attributeCache: scala.collection.mutable.Map[Attribute, ConcreteValue] = scala.collection.mutable.Map()
+  protected val attributeCache: scala.collection.mutable.Map[Attribute, ConcreteValue] = scala.collection.mutable.Map() //scala.collection.concurrent.TrieMap()
 
   override def cachedAttributes: Map[Attribute, ConcreteValue] = attributeCache.toMap
 
@@ -111,11 +117,61 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   }
 
   /**
+   * To make sure that we only request an attribute once from the database, we
+   * store all futures regarding a certain attribute. This way, we can return this
+   * future if an attribute is requested again after the first time.
+   */
+  private val attributeFutures = scala.collection.mutable.Map[Attribute, Future[ConcreteValue]]()
+
+  // immediately fill these attribute futures with the futures for the cached attributes
+  // to simplify the rest of the code
+  for ((attribute, value) <- request.allAttributes) {
+    attributeFutures(attribute) = Future { value }
+  }
+
+  /**
+   * TODO should this be an actor to avoid concurrency issues or race conditions?
+   */
+  override def findAttributeAsync(attribute: Attribute): Future[ConcreteValue] = {
+    attributeFutures.get(attribute) match {
+      case Some(future) =>
+        // we have already issued a future to fetch this attribute => return this one
+        debug("FLOW: found future for " + attribute + " in map")
+        future
+      case None => {
+        // this is the first time this attribute is requested => issue and return a new
+        // future to fetch the attribute
+        // Note that all cached attributes are also present in the attributeFutures, so no
+        // need to check the cache here
+        val f = Future {
+          blocking {
+            try {
+              val value: ConcreteValue = finder.find(this, attribute)
+              attributeCache(attribute) = value // add to cache
+              debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
+              value
+            } catch {
+              case e: AttributeNotFoundException =>
+                debug(s"Didn't find value of $attribute anywhere, exception thrown")
+                throw e
+              case e: Exception =>
+                debug(s"Unknown exception thrown: $e")
+                throw e
+            }
+          }
+        }
+        attributeFutures(attribute) = f
+        f
+      }
+    }
+  }
+
+  /**
    * Return the implementation of the requested combination algorithm.
    */
   def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation = algo match {
-      case PermitOverrides => SimpleCombinationAlgorithmImplementationBundle.PermitOverrides
-      case DenyOverrides => SimpleCombinationAlgorithmImplementationBundle.DenyOverrides
-      case FirstApplicable => SimpleCombinationAlgorithmImplementationBundle.FirstApplicable
-    }
+    case PermitOverrides => bundle.PermitOverrides
+    case DenyOverrides => bundle.DenyOverrides
+    case FirstApplicable => bundle.FirstApplicable
+  }
 }

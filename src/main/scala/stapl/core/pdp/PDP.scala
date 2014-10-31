@@ -24,6 +24,11 @@ import stapl.core.Attribute
 import stapl.core.ConcreteValue
 import stapl.core.Decision
 import stapl.core.Result
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.blocking
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
  * Class used for representing a policy decision point (PDP). A PDP provides
@@ -38,7 +43,7 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvalua
    * any attributes) and empty remote evaluator.
    */
   def this(policy: AbstractPolicy) = this(policy, new AttributeFinder, new RemoteEvaluator)
-  
+
   /**
    * Set up this new PDP with an empty attribute finder (which does not find
    * any attributes).
@@ -49,7 +54,7 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvalua
    * Set up this new PDP with an empty remote evaluator.
    */
   def this(policy: AbstractPolicy, attributeFinder: AttributeFinder) = this(policy, attributeFinder, new RemoteEvaluator)
-  
+
   /**
    * Evaluate the policy of this PDP with given subject id, action id, resource id
    * and possibly extra attributes and return the result.
@@ -83,5 +88,79 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvalua
     // append the employed attributes: these are the cached attributes
     result.employedAttributes ++= ctx.cachedAttributes
     result
+  }
+
+  /**
+   * Evaluate the policy of this PDP with given subject id, action id, resource id
+   * and possibly extra attributes and return the result.
+   * This will employ the attribute finder of this PDP.
+   */
+  def evaluateAsync(subjectId: String, actionId: String,
+    resourceId: String, extraAttributes: (Attribute, ConcreteValue)*): Future[Result] =
+    evaluateAsync(new RequestCtx(subjectId, actionId, resourceId, extraAttributes: _*))
+
+  /**
+   * Evaluate the policy of this PDP with given request context and generated incrementing
+   * evaluation id and return the result. This will employ the attribute finder of this PDP.
+   */
+  def evaluateAsync(ctx: RequestCtx): Future[Result] =
+    evaluateAsync(new BasicEvaluationCtx(timestampGenerator.getTimestamp, ctx, attributeFinder, remoteEvaluator))
+
+  /**
+   * Evaluate the policy of this PDP with given evaluation id and request context
+   * and return the result. This will employ the attribute finder of this PDP.
+   */
+  def evaluateAsync(evaluationId: Long, ctx: RequestCtx): Future[Result] =
+    evaluateAsync(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
+
+  /**
+   * Evaluate the policy of this PDP with given evaluation context and return
+   * the result.
+   * This allows you to specify another attribute finder than the one of this PDP.
+   */
+  def evaluateAsync(ctx: EvaluationCtx): Future[Result] = {
+    val f = policy.evaluateAsync(ctx)
+    for {
+      result <- f
+    } yield {
+      // append the employed attributes: these are the cached attributes
+      result.employedAttributes ++= ctx.cachedAttributes
+      result
+    }
+  }
+
+  /**
+   * Evaluate the policy of this PDP with given subject id, action id, resource id
+   * and possibly extra attributes and return the result.
+   * This will employ the attribute finder of this PDP.
+   */
+  def evaluateAwaitAsync(subjectId: String, actionId: String,
+    resourceId: String, extraAttributes: (Attribute, ConcreteValue)*): Result =
+    evaluateAwaitAsync(new RequestCtx(subjectId, actionId, resourceId, extraAttributes: _*))
+
+  /**
+   * Evaluate the policy of this PDP with given request context and generated incrementing
+   * evaluation id and return the result. This will employ the attribute finder of this PDP.
+   */
+  def evaluateAwaitAsync(ctx: RequestCtx): Result =
+    evaluateAwaitAsync(new BasicEvaluationCtx(timestampGenerator.getTimestamp, ctx, attributeFinder, remoteEvaluator))
+
+  /**
+   * Evaluate the policy of this PDP with given evaluation id and request context
+   * and return the result. This will employ the attribute finder of this PDP.
+   */
+  def evaluateAwaitAsync(evaluationId: Long, ctx: RequestCtx): Result =
+    evaluateAwaitAsync(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
+
+  /**
+   * Evaluate the policy of this PDP with given evaluation context and return
+   * the result.
+   * This allows you to specify another attribute finder than the one of this PDP.
+   */
+  def evaluateAwaitAsync(ctx: EvaluationCtx): Result = {
+    val f = evaluateAsync(ctx)
+    blocking {
+      Await.result(f, 2.seconds)
+    }
   }
 }

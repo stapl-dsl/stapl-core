@@ -24,22 +24,26 @@ import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 import org.joda.time.Period
 import stapl.core.pdp.EvaluationCtx
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
-object ConcreteValue {
-  
-  def unapply(value: Value)(implicit ctx: EvaluationCtx): Option[ConcreteValue] =
-    Option(value.getConcreteValue(ctx))
-}
-
-object Representation {
-  
-  def unapply(value: Value)(implicit ctx: EvaluationCtx): Option[Any] =
-    Option(value.getConcreteValue(ctx).representation)
-}
+//object ConcreteValue {
+//  
+//  def unapply(value: Value)(implicit ctx: EvaluationCtx): Option[ConcreteValue] =
+//    Option(value.getConcreteValue(ctx))
+//}
+//
+//object Representation {
+//  
+//  def unapply(value: Value)(implicit ctx: EvaluationCtx): Option[Any] =
+//    Option(value.getConcreteValue(ctx).representation)
+//}
 
 trait ConcreteValue extends Value with Serializable {
   
   override def getConcreteValue(ctx: EvaluationCtx): ConcreteValue = this
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = Future { this }
   
   val representation: Any
   

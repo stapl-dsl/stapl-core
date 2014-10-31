@@ -21,11 +21,16 @@ package stapl.core
 
 import AttributeType._
 import stapl.core.pdp.EvaluationCtx
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 sealed abstract class Attribute(val cType: AttributeContainerType, val name: String, val aType: AttributeType) extends Value {
 
   override def getConcreteValue(ctx: EvaluationCtx) =
     ctx.findAttribute(this)
+  
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = 
+    ctx.findAttributeAsync(this)
 }
 object Attribute {
   
