@@ -29,6 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.blocking
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.{ Try, Success, Failure }
 
 /**
  * Class used for representing a policy decision point (PDP). A PDP provides
@@ -122,10 +123,15 @@ class PDP(policy: AbstractPolicy, attributeFinder: AttributeFinder, remoteEvalua
     val f = policy.evaluateAsync(ctx)
     for {
       result <- f
-    } yield {
-      // append the employed attributes: these are the cached attributes
-      result.employedAttributes ++= ctx.cachedAttributes
-      result
+    } yield result match {
+      case Failure(e) =>
+        // If we have a Failure on the top level: throw the error
+        throw e
+      case Success(result) =>
+        // report which attributes we have employed to get to the result
+        // these are the cached attributes
+        result.employedAttributes ++= ctx.cachedAttributes
+        result
     }
   }
 

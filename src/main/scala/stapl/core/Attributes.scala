@@ -23,13 +23,14 @@ import AttributeType._
 import stapl.core.pdp.EvaluationCtx
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Try, Success, Failure}
 
 sealed abstract class Attribute(val cType: AttributeContainerType, val name: String, val aType: AttributeType) extends Value {
 
   override def getConcreteValue(ctx: EvaluationCtx) =
     ctx.findAttribute(this)
   
-  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = 
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]] = 
     ctx.findAttributeAsync(this)
 }
 object Attribute {

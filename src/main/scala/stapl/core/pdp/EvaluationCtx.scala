@@ -35,6 +35,7 @@ import scala.concurrent.Future
 import scala.concurrent.blocking
 import scala.concurrent.ExecutionContext.Implicits.global
 import stapl.core.CombinationAlgorithmImplementationBundle
+import scala.util.{Try, Success, Failure}
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -55,7 +56,7 @@ trait EvaluationCtx {
   def remoteEvaluator: RemoteEvaluator
   def cachedAttributes: Map[Attribute, ConcreteValue]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
-  protected[core] def findAttributeAsync(attribute: Attribute): Future[ConcreteValue]
+  protected[core] def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]]
   protected[core] def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation
 
   // TODO add type checking here
@@ -91,7 +92,10 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
    * in the attribute cache, that value is returned. Otherwise, the attribute
    * finder is checked and the found value is stored in the attribute cache if
    * a value is found.
+   *
+   * @throws	AttributeNotFoundException	If the attribute value isn't found
    */
+  @throws[AttributeNotFoundException]("if the attribute value isn't found")
   override def findAttribute(attribute: Attribute): ConcreteValue = {
     attributeCache.get(attribute) match {
       case Some(value) => {
@@ -99,18 +103,14 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
         value
       }
       case None => { // Not in the cache
-        try {
-          val value: ConcreteValue = finder.find(this, attribute)
-          attributeCache(attribute) = value // add to cache
-          debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
-          value
-        } catch {
-          case e: AttributeNotFoundException =>
-            debug(s"Didn't find value of $attribute anywhere, exception thrown")
-            throw e
-          case e: Exception =>
-            debug(s"Unknown exception thrown: $e")
-            throw e
+        finder.find(this, attribute) match {
+          case None =>
+            debug(s"Didn't find value of $attribute anywhere, throwing exception")
+            throw new AttributeNotFoundException(attribute)
+          case Some(value) =>
+            attributeCache(attribute) = value // add to cache
+            debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
+            value
         }
       }
     }
@@ -121,18 +121,18 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
    * store all futures regarding a certain attribute. This way, we can return this
    * future if an attribute is requested again after the first time.
    */
-  private val attributeFutures = scala.collection.mutable.Map[Attribute, Future[ConcreteValue]]()
+  private val attributeFutures = scala.collection.mutable.Map[Attribute, Future[Try[ConcreteValue]]]()
 
   // immediately fill these attribute futures with the futures for the cached attributes
   // to simplify the rest of the code
   for ((attribute, value) <- request.allAttributes) {
-    attributeFutures(attribute) = Future { value }
+    attributeFutures(attribute) = Future { Success(value) }
   }
 
   /**
    * TODO should this be an actor to avoid concurrency issues or race conditions?
    */
-  override def findAttributeAsync(attribute: Attribute): Future[ConcreteValue] = {
+  override def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]] = {
     attributeFutures.get(attribute) match {
       case Some(future) =>
         // we have already issued a future to fetch this attribute => return this one
@@ -142,21 +142,16 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
         // this is the first time this attribute is requested => issue and return a new
         // future to fetch the attribute
         // Note that all cached attributes are also present in the attributeFutures, so no
-        // need to check the cache here
+        // need to check or update the attribute cache here
         val f = Future {
           blocking {
-            try {
-              val value: ConcreteValue = finder.find(this, attribute)
-              attributeCache(attribute) = value // add to cache
-              debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
-              value
-            } catch {
-              case e: AttributeNotFoundException =>
-                debug(s"Didn't find value of $attribute anywhere, exception thrown")
-                throw e
-              case e: Exception =>
-                debug(s"Unknown exception thrown: $e")
-                throw e
+            finder.find(this, attribute) match {
+              case None =>
+                debug(s"Didn't find value of $attribute anywhere, returning Failure")
+                Failure(new AttributeNotFoundException(attribute))
+              case Some(value) =>
+                debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to futures cache")
+                Success(value)
             }
           }
         }

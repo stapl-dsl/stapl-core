@@ -25,6 +25,7 @@ import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable.Map
+import scala.util.{ Try, Success, Failure }
 
 /**
  * *************************
@@ -38,7 +39,7 @@ sealed trait CombinationAlgorithm {
   def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result =
     ctx.getCombinationAlgorithmImplementation(this).combine(policies, ctx)
 
-  def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Result] =
+  def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]] =
     ctx.getCombinationAlgorithmImplementation(this).combineAsync(policies, ctx)
 }
 
@@ -53,7 +54,7 @@ case object FirstApplicable extends CombinationAlgorithm
 trait CombinationAlgorithmImplementation {
 
   def combine(policies: List[AbstractPolicy], ctx: EvaluationCtx): Result
-  def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Result]
+  def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]]
 }
 
 trait CombinationAlgorithmImplementationBundle {
@@ -96,28 +97,39 @@ object SimpleCombinationAlgorithmImplementationBundle extends CombinationAlgorit
       tmpResult
     }
 
-    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Result] = {
+    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]] = {
+      // Note: this code waits for every branch to complete, which is not required for
+      // reaching an end-result in some cases.
+      // TODO optimize
       for {
         results <- Future.sequence(policies map { _.evaluateAsync(ctx) })
       } yield {
-        // check the results: 
-        // If the list contains at least one Permit: return the first Permit
+        // check the results:
+        // If we find a Failure before any Permit: return this Failure
+        // Else if the list contains at least one Permit: return the first Permit
         // Else if the list contains at least one Deny: combine all Denies
         // Else return NotApplicable
-        // TODO I guess you can do this without traversing the list twice
-        val permits = results.filter(_.decision == Permit)
-        val denies = results.filter(_.decision == Deny)
-        if (!permits.isEmpty) {
-          permits.head
-        } else if (!denies.isEmpty) {
-          var tmpResult = Result(Deny)
-          denies foreach { x =>
-            tmpResult = Result(Deny, tmpResult.obligationActions ::: x.obligationActions)
+        var result: Try[Result] = Success(NotApplicable)
+        var continue = true
+        results.toStream.takeWhile(_ => continue).foreach(_ match {
+          case Failure(e) =>
+            // this failure was crucial since we did not find a conclusive result yet 
+            // => pass it on and jump out of the loop
+            result = Failure(e)
+            continue = false
+          case Success(r) => r.decision match {
+            case Permit =>
+              // we only need one Permit and only retain those obligations => jump out of the loop
+              result = Success(r)
+              continue = false
+            case Deny =>
+              // retain all obligations of previous Denies
+              val Success(prevResult) = result
+              result = Success(Result(Deny, prevResult.obligationActions ::: r.obligationActions))
+            case NotApplicable => // nothing to do
           }
-          tmpResult
-        } else {
-          Result(NotApplicable)
-        }
+        })
+        result
       }
       //      /**
       //       * This is part of the code that we need in order not to wait for every branch
@@ -186,28 +198,39 @@ object SimpleCombinationAlgorithmImplementationBundle extends CombinationAlgorit
       tmpResult
     }
 
-    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Result] = {
+    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]] = {
+      // Note: this code waits for every branch to complete, which is not required for
+      // reaching an end-result in some cases.
+      // TODO optimize
       for {
         results <- Future.sequence(policies map { _.evaluateAsync(ctx) })
       } yield {
-        // check the results: 
-        // If the list contains at least one Deny: return the first Deny
-        // Else if the list contains at least one Permit: combine all Permits
+        // check the results:
+        // If we find a Failure before any Permit: return this Failure
+        // Else if the list contains at least one Permit: return the first Permit
+        // Else if the list contains at least one Deny: combine all Denies
         // Else return NotApplicable
-        // TODO I guess you can do this without traversing the list twice
-        val denies = results.filter(_.decision == Deny)
-        val permits = results.filter(_.decision == Permit)
-        if (!denies.isEmpty) {
-          denies.head
-        } else if (!permits.isEmpty) {
-          var tmpResult = Result(Deny)
-          permits foreach { x =>
-            tmpResult = Result(Permit, tmpResult.obligationActions ::: x.obligationActions)
+        var result: Try[Result] = Success(NotApplicable)
+        var continue = true
+        results.toStream.takeWhile(_ => continue).foreach(_ match {
+          case Failure(e) =>
+            // this failure was crucial since we did not find a conclusive result yet 
+            // => pass it on and jump out of the loop
+            result = Failure(e)
+            continue = false
+          case Success(r) => r.decision match {
+            case Deny =>
+              // we only need one Deny and only retain those obligations => jump out of the loop
+              result = Success(r)
+              continue = false
+            case Permit =>
+              // retain all obligations of previous Permits
+              val Success(prevResult) = result
+              result = Success(Result(Permit, prevResult.obligationActions ::: r.obligationActions))
+            case NotApplicable => // nothing to do
           }
-          tmpResult
-        } else {
-          Result(NotApplicable)
-        }
+        })
+        result
       }
     }
   }
@@ -231,16 +254,31 @@ object SimpleCombinationAlgorithmImplementationBundle extends CombinationAlgorit
       tmpResult
     }
 
-    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Result] = {
+    override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]] = {
       for {
         results <- Future.sequence(policies map { _.evaluateAsync(ctx) })
       } yield {
-        // check the results: return the first applicable result or NotApplicable if
-        // there are no such results
-        results.find(_.decision != NotApplicable) match {
-          case Some(x) => x
-          case None => NotApplicable
-        } 
+        // check the results:
+        // If we find a Failure before any Permit/Deny: return this Failure
+        // Else if the list contains at least one Permit/Deny: return that Permit/Deny
+        // Else return NotApplicable
+        var result: Try[Result] = Success(NotApplicable)
+        var continue = true
+        results.toStream.takeWhile(_ => continue).foreach(_ match {
+          case Failure(e) =>
+            // this failure was crucial since we did not find a conclusive result yet 
+            // => pass it on and jump out of the loop
+            result = Failure(e)
+            continue = false
+          case Success(r) => r.decision match {
+            case Permit | Deny =>
+              // we only need one Deny and only retain those obligations => jump out of the loop
+              result = Success(r)
+              continue = false
+            case NotApplicable => // nothing to do
+          }
+        })
+        result
       }
     }
   }

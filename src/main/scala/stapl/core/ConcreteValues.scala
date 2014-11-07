@@ -26,6 +26,7 @@ import org.joda.time.Period
 import stapl.core.pdp.EvaluationCtx
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Try, Success, Failure}
 
 //object ConcreteValue {
 //  
@@ -43,7 +44,7 @@ trait ConcreteValue extends Value with Serializable {
   
   override def getConcreteValue(ctx: EvaluationCtx): ConcreteValue = this
   
-  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue] = Future { this }
+  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]] = Future { Success(this) }
   
   val representation: Any
   

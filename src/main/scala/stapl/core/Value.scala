@@ -21,6 +21,7 @@ package stapl.core
 
 import stapl.core.pdp.EvaluationCtx
 import scala.concurrent.Future
+import scala.util.{Try, Success, Failure}
 
 /**
  * The base trait for all attributes in policies. Each Value has a 
@@ -33,7 +34,7 @@ trait Value {
   val isList: Boolean
   
   def getConcreteValue(ctx: EvaluationCtx): ConcreteValue
-  def getConcreteValueAsync(ctx: EvaluationCtx): Future[ConcreteValue]
+  def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]]
   
   private def typeCheck(that: Value) {
     AttributeType.checkType(that.aType, this.aType)

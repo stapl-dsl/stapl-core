@@ -40,18 +40,15 @@ sealed class AttributeFinder extends Modules[AttributeFinderModule] {
 
   /**
    * Tries to find the value of a certain attribute in the given evaluation context.
-   * 
-   * @throws	AttributeNotFoundException	If the attribute value isn't found
    */
-  @throws[AttributeNotFoundException]("if the attribute value isn't found")
-  def find(ctx: EvaluationCtx, attribute: Attribute): ConcreteValue = {
+  def find(ctx: EvaluationCtx, attribute: Attribute): Option[ConcreteValue] = {
     @tailrec
-    def find(modules: List[AttributeFinderModule]): ConcreteValue = modules match {
+    def find(modules: List[AttributeFinderModule]): Option[ConcreteValue] = modules match {
       case module :: tail => module.find(ctx, attribute) match {
-        case Some(result) => result
+        case Some(result) => Some(result)
         case None => find(tail)
       }
-      case Nil => throw new AttributeNotFoundException(attribute)
+      case Nil => None
     }
     find(modules)
   }

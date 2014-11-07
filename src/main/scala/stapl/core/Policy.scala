@@ -24,6 +24,7 @@ import stapl.core.pdp.EvaluationCtx
 import scala.concurrent.Future
 import concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
+import scala.util.{ Try, Success, Failure }
 
 /**
  * *******************************************
@@ -37,12 +38,12 @@ abstract class AbstractPolicy(val id: String) {
    * apply its decision.
    */
   def evaluate(implicit ctx: EvaluationCtx): Result
-  def evaluateAsync(implicit ctx: EvaluationCtx): Future[Result]
+  def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]]
 
   // TODO remove this from AbstractPolicy, Policy and RemotePolicy (this is only to be used 
   // internally in a Policy)
   def isApplicable(implicit ctx: EvaluationCtx): Boolean
-  def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Boolean]
+  def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]]
 
   //def allIds: List[String]
 
@@ -73,31 +74,34 @@ class Rule(id: String)(val effect: Effect,
   override def evaluate(implicit ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of Policy #$fqid (evaluation id #${ctx.evaluationId})")
     if (!isApplicable) {
-      debug(s"FLOW: Policy #$fqid was NotApplicable because of target")
+      debug(s"FLOW: Rule #$fqid was NotApplicable because of target")
       NotApplicable
     } else {
       if (condition.evaluate) {
-        debug(s"FLOW: Policy #$fqid returned $effect with obligations $obligationActions")
+        debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
         Result(effect, obligationActions)
       } else {
-        debug(s"FLOW: Policy #$fqid was NotApplicable because of condition")
+        debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
         NotApplicable
       }
     }
   }
 
-  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Result] = {
+  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]] = {
     debug(s"FLOW: starting evaluation of Policy #$fqid (evaluation id #${ctx.evaluationId})")
 
     // Note: rules always apply since they have no target => do not even test this
     condition.evaluateAsync(ctx) map { x =>
       x match {
-        case true =>
-          debug(s"FLOW: Policy #$fqid returned $effect with obligations $obligationActions")
-          Result(effect, obligationActions)
-        case false =>
-          debug(s"FLOW: Policy #$fqid was NotApplicable because of condition")
-          Result(NotApplicable)
+        case Failure(e) =>
+          debug(s"FLOW: Rule #$fqid could not return a result")
+          Failure(e)
+        case Success(true) =>
+          debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
+          Success(Result(effect, obligationActions))
+        case Success(false) =>
+          debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
+          Success(Result(NotApplicable))
       }
     }
   }
@@ -106,7 +110,7 @@ class Rule(id: String)(val effect: Effect,
    * Rules always apply
    */
   override def isApplicable(implicit ctx: EvaluationCtx): Boolean = true
-  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Boolean] = Future { true }
+  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = Future { Success(true) }
 
   //override def allIds: List[String] = List(id)
 
@@ -147,28 +151,33 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
     }
   }
 
-  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Result] = {
+  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]] = {
     debug(s"FLOW: starting evaluation of PolicySet #$fqid")
 
     target.evaluateAsync(ctx) flatMap { isApplicable =>
-      if (isApplicable) {
-        // only now evaluate the sub-policies
-        pca.combineAsync(subpolicies, ctx).map({ result =>
-          // add applicable obligations of our own
-          val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action)
-          val finalResult = Result(result.decision, applicableObligationActions)
-          debug(s"FLOW: PolicySet #$fqid returned $finalResult")
-          finalResult
-        })
-      } else {
-        debug(s"FLOW: PolicySet #$fqid was NotApplicable because of target")
-        Future { NotApplicable }
+      isApplicable match {
+        case Failure(e) =>
+          Future { Failure(e) }
+        case Success(true) =>
+          // only now evaluate the sub-policies
+          pca.combineAsync(subpolicies, ctx).map(_ match {
+            case Failure(e) => Failure(e)
+            case Success(result) =>
+              // add applicable obligations of our own
+              val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action)
+              val finalResult = Result(result.decision, applicableObligationActions)
+              debug(s"FLOW: PolicySet #$fqid returned $finalResult")
+              Success(finalResult)
+          })
+        case Success(false) =>
+          debug(s"FLOW: PolicySet #$fqid was NotApplicable because of target")
+          Future { Success(NotApplicable) }
       }
     }
   }
 
   override def isApplicable(implicit ctx: EvaluationCtx): Boolean = target.evaluate
-  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Boolean] = target.evaluateAsync
+  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = target.evaluateAsync
 
   //override def allIds: List[String] = id :: subpolicies.flatMap(_.allIds)
 
@@ -204,9 +213,9 @@ case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with
     ctx.remoteEvaluator.findAndIsApplicable(id, ctx)
   }
 
-  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Result] = ???
+  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]] = ???
 
-  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Boolean] = ???
+  override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = ???
 }
 
 /**
