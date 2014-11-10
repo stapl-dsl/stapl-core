@@ -35,7 +35,7 @@ import scala.concurrent.Future
 import scala.concurrent.blocking
 import scala.concurrent.ExecutionContext.Implicits.global
 import stapl.core.CombinationAlgorithmImplementationBundle
-import scala.util.{Try, Success, Failure}
+import scala.util.{ Try, Success, Failure }
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -55,6 +55,7 @@ trait EvaluationCtx {
   def actionId: String
   def remoteEvaluator: RemoteEvaluator
   def cachedAttributes: Map[Attribute, ConcreteValue]
+  def employedAttributes: Map[Attribute, ConcreteValue]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
   protected[core] def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]]
   protected[core] def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation
@@ -87,6 +88,10 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
     attributeCache(attribute) = value
   }
 
+  protected val _employedAttributes: scala.collection.mutable.Map[Attribute, ConcreteValue] = scala.collection.mutable.Map()
+
+  override def employedAttributes = _employedAttributes.toMap
+
   /**
    * Try to find the value of the given attribute. If the value is already
    * in the attribute cache, that value is returned. Otherwise, the attribute
@@ -100,6 +105,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
     attributeCache.get(attribute) match {
       case Some(value) => {
         debug("FLOW: found value of " + attribute + " in cache: " + value)
+        _employedAttributes(attribute) = value
         value
       }
       case None => { // Not in the cache
@@ -109,6 +115,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
             throw new AttributeNotFoundException(attribute)
           case Some(value) =>
             attributeCache(attribute) = value // add to cache
+            _employedAttributes(attribute) = value
             debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
             value
         }
