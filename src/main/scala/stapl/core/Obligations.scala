@@ -75,9 +75,16 @@ object mail {
  */
 case class UpdateAttributeObligationAction(val attribute: Attribute, val value: Value) extends ObligationAction {
   
-  def getConcrete(implicit ctx: EvaluationCtx) = ConcreteUpdateAttributeObligationAction(attribute, value.getConcreteValue(ctx))
+  def getConcrete(implicit ctx: EvaluationCtx) = {
+    val entityId = attribute.cType match {
+      case SUBJECT => ctx.subjectId
+      case RESOURCE => ctx.resourceId
+      case _ => throw new IllegalArgumentException(s"You can only update SUBJECT and RESOURCE attributes. Given attribute: $attribute")
+    }
+    ConcreteUpdateAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx))
+  }
 }
-case class ConcreteUpdateAttributeObligationAction(val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
+case class ConcreteUpdateAttributeObligationAction(val entityId: String, val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
 object update {
   def apply(attribute: Attribute, value: ConcreteValue) =
     new UpdateAttributeObligationAction(attribute, value)
