@@ -19,6 +19,8 @@
  */
 package stapl.core
 
+import stapl.core.pdp.EvaluationCtx
+
 /**
  * 
  */
@@ -27,21 +29,38 @@ case class Obligation(val action: ObligationAction, val fulfillOn: Effect)
 /**
  * Class used for representing the action to be performed as specified in
  * an obligation.
+ * 
+ * TODO better name for this? very long...
  */
-abstract class ObligationAction // TODO better name for this? very long...
+trait ObligationAction {
+  
+  def getConcrete(implicit ctx: EvaluationCtx): ConcreteObligationAction
+}
 
-// TODO PDP needs to evaluate msg to a ConcreteValue before passing it on to PEP
-case class LogObligationAction(val msg: Value) extends ObligationAction
+trait ConcreteObligationAction
+
+trait SimpleObligationAction extends ObligationAction with ConcreteObligationAction {
+  
+  override def getConcrete(implicit ctx: EvaluationCtx) = this
+}
+
+case class LogObligationAction(val msg: Value) extends ObligationAction {
+  
+  def getConcrete(implicit ctx: EvaluationCtx) = {    
+    ConcreteLogObligationAction(msg.getConcreteValue(ctx).representation.toString)
+  } 
+}
+case class ConcreteLogObligationAction(val msg: String) extends ConcreteObligationAction
 object log {
   def apply(msg: Value) = new LogObligationAction(msg)
 }
 
-case class MailObligationAction(val to: String, val msg: String) extends ObligationAction
+case class MailObligationAction(val to: String, val msg: String) extends SimpleObligationAction
 object mail {
   def apply(to: String, msg: String) = new MailObligationAction(to, msg)
 }
 
-case class UpdateAttributeObligationAction(val attribute: Attribute, val value: ConcreteValue) extends ObligationAction
+case class UpdateAttributeObligationAction(val attribute: Attribute, val value: ConcreteValue) extends SimpleObligationAction
 object update {
   def apply(attribute: Attribute, value: ConcreteValue) =
     new UpdateAttributeObligationAction(attribute, value)

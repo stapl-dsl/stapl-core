@@ -26,7 +26,7 @@ import scala.collection.mutable.Map
  * A result contains a decision and possibly obligation actions to be fulfilled.
  */
 case class Result(val decision: Decision, 
-    val obligationActions: List[ObligationAction] = List.empty, 
+    val obligationActions: List[ConcreteObligationAction] = List.empty, 
     val employedAttributes: Map[Attribute,ConcreteValue] = Map())
 
 /**

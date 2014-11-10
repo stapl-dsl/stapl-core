@@ -1,11 +1,12 @@
 package stapl.core.pdp
 
-import stapl.core.ObligationAction
 import scala.annotation.tailrec
 import stapl.core.LogObligationAction
 import stapl.core.LogObligationAction
 import stapl.core.LogObligationAction
 import grizzled.slf4j.Logging
+import stapl.core.ConcreteObligationAction
+import stapl.core.ConcreteLogObligationAction
 
 /**
  * Class used for representing an obligation service. An obligation service
@@ -22,7 +23,7 @@ class ObligationService extends Modules[ObligationServiceModule] {
    * iterates over all modules and returns when the first module has
    * handled the ObligationAction.
    */
-  def fulfill(obl: ObligationAction): Boolean = {
+  def fulfill(obl: ConcreteObligationAction): Boolean = {
     @tailrec
     def fulfill(modules: List[ObligationServiceModule]): Boolean = modules match {
       case module :: tail => module.fulfill(obl) match {
@@ -44,15 +45,15 @@ trait ObligationServiceModule {
    * Tries to fulfill the given ObligationAction and returns whether
    * this succeeded.
    */
-  def fulfill(obl: ObligationAction): Boolean
+  def fulfill(obl: ConcreteObligationAction): Boolean
 }
 
 class LogObligationServiceModule extends ObligationServiceModule with Logging {
   
-  override def fulfill(obl: ObligationAction) = {
+  override def fulfill(obl: ConcreteObligationAction) = {
     // we only support LogObligationActions
     obl match {
-      case log: LogObligationAction =>
+      case log: ConcreteLogObligationAction =>
         info(s"Log obligation: ${log.msg}")
         true
       case _ => false

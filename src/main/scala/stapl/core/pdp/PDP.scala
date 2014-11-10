@@ -32,6 +32,7 @@ import scala.concurrent.duration._
 import scala.util.{ Try, Success, Failure }
 import scala.collection.mutable.ListBuffer
 import stapl.core.ObligationAction
+import stapl.core.ConcreteObligationAction
 
 /**
  * Class used for representing a policy decision point (PDP). A PDP provides
@@ -95,7 +96,7 @@ class PDP(policy: AbstractPolicy,
   def evaluate(ctx: EvaluationCtx): Result = {
     val result = policy.evaluate(ctx)
     // try to fulfill the obligations
-    val remainingObligations = ListBuffer[ObligationAction]()
+    val remainingObligations = ListBuffer[ConcreteObligationAction]()
     for (obl <- result.obligationActions) {
       if (!obligationService.fulfill(obl)) {
         remainingObligations += obl
@@ -143,7 +144,7 @@ class PDP(policy: AbstractPolicy,
         throw e
       case Success(result) =>
         // try to fulfill the obligations
-        val remainingObligations = ListBuffer[ObligationAction]()
+        val remainingObligations = ListBuffer[ConcreteObligationAction]()
         for (obl <- result.obligationActions) {
           if (!obligationService.fulfill(obl)) {
             remainingObligations += obl

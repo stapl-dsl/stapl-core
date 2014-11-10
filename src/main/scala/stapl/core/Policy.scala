@@ -79,7 +79,7 @@ class Rule(id: String)(val effect: Effect,
     } else {
       if (condition.evaluate) {
         debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
-        Result(effect, obligationActions)
+        Result(effect, obligationActions map {_.getConcrete})
       } else {
         debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
         NotApplicable
@@ -98,7 +98,7 @@ class Rule(id: String)(val effect: Effect,
           Failure(e)
         case Success(true) =>
           debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
-          Success(Result(effect, obligationActions))
+          Success(Result(effect, obligationActions map {_.getConcrete}))
         case Success(false) =>
           debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
           Success(Result(NotApplicable))
@@ -141,7 +141,7 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
     if (isApplicable) {
       val result = pca.combine(subpolicies, ctx)
       // add applicable obligations of our own
-      val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action)
+      val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action.getConcrete)
       val finalResult = Result(result.decision, applicableObligationActions)
       debug(s"FLOW: PolicySet #$fqid returned $finalResult")
       finalResult
@@ -164,7 +164,7 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
             case Failure(e) => Failure(e)
             case Success(result) =>
               // add applicable obligations of our own
-              val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action)
+              val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action.getConcrete)
               val finalResult = Result(result.decision, applicableObligationActions)
               debug(s"FLOW: PolicySet #$fqid returned $finalResult")
               Success(finalResult)
