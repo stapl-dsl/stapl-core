@@ -86,6 +86,6 @@ case class UpdateAttributeObligationAction(val attribute: Attribute, val value: 
 }
 case class ConcreteUpdateAttributeObligationAction(val entityId: String, val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
 object update {
-  def apply(attribute: Attribute, value: ConcreteValue) =
+  def apply(attribute: Attribute, value: Value) =
     new UpdateAttributeObligationAction(attribute, value)
 }
