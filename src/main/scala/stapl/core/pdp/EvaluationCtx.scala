@@ -130,7 +130,9 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   }
 
   /**
-   * TODO should this be an actor to avoid concurrency issues or race conditions?
+   * TODO 	should this be an actor to avoid concurrency issues or race conditions? Another option:
+   * 		make attributeFutures a concurrent map. On the other hand: aren't we sure that all policy
+   *   		evaluation code except from attribute fetch itself is performed in the same thread?
    */
   override def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]] = {
     attributeFutures.get(attribute) match {
