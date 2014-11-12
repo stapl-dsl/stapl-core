@@ -100,7 +100,8 @@ object SimpleCombinationAlgorithmImplementationBundle extends CombinationAlgorit
     override def combineAsync(policies: List[AbstractPolicy], ctx: EvaluationCtx): Future[Try[Result]] = {
       // Note: this code waits for every branch to complete, which is not required for
       // reaching an end-result in some cases.
-      // TODO optimize
+      // TODO optimize: return when we have a decision, which does not necessarily mean that we
+      // 	should wait for all branches to complete
       for {
         results <- Future.sequence(policies map { _.evaluateAsync(ctx) })
       } yield {

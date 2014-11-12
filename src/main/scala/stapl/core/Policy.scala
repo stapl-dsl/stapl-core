@@ -154,6 +154,10 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
   override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]] = {
     debug(s"FLOW: starting evaluation of PolicySet #$fqid")
 
+    // note: some serial behavior on purpose: only evaluate the children after
+    // we know that the target applies
+    // TODO improve this: actually, we only want to test the result of the target
+    //		if we have it immediately
     target.evaluateAsync(ctx) flatMap { isApplicable =>
       isApplicable match {
         case Failure(e) =>
