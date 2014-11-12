@@ -38,11 +38,11 @@ abstract class Expression {
 
 case object AlwaysTrue extends Expression {
   override def evaluate(implicit ctx: EvaluationCtx): Boolean = true
-  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = Future { Success(true) }
+  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = Future successful Success(true)
 }
 case object AlwaysFalse extends Expression {
   override def evaluate(implicit ctx: EvaluationCtx): Boolean = false
-  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = Future { Success(false) }
+  override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = Future successful Success(false)
 }
 case class GreaterThanValue(value1: Value, value2: Value) extends Expression {
   override def evaluate(implicit ctx: EvaluationCtx): Boolean = {

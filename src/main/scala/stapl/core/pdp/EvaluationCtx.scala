@@ -133,7 +133,7 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
   // immediately fill these attribute futures with the futures for the cached attributes
   // to simplify the rest of the code
   for ((attribute, value) <- request.allAttributes) {
-    attributeFutures(attribute) = Future { Success(value) }
+    attributeFutures(attribute) = Future successful Success(value)
   }
 
   /**
