@@ -250,7 +250,7 @@ class OnlyIdRule(private val id: String) {
     new Rule(id)(t.effect, t.condition)
 
   def :=(t: EffectAndObligationActions): Rule =
-    new Rule(id)(t.effect)
+    new Rule(id)(t.effect, AlwaysTrue, List(t.obligationActions: _*))
 
   def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
     case `deny` => new Rule(id)(Deny)
