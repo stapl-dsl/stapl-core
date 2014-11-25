@@ -94,6 +94,9 @@ object update {
  * Appending to attribute values
  */
 case class AppendAttributeObligationAction(val attribute: Attribute, val value: Value) extends ObligationAction {
+  if(!attribute.isList) {
+    throw new IllegalArgumentException(s"You can only append to list attributes. Given attribute: $attribute")
+  }
   
   def getConcrete(implicit ctx: EvaluationCtx) = {
     val entityId = attribute.cType match {
