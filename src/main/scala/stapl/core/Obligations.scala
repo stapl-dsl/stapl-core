@@ -89,3 +89,23 @@ object update {
   def apply(attribute: Attribute, value: Value) =
     new UpdateAttributeObligationAction(attribute, value)
 }
+
+/**
+ * Appending to attribute values
+ */
+case class AppendAttributeObligationAction(val attribute: Attribute, val value: Value) extends ObligationAction {
+  
+  def getConcrete(implicit ctx: EvaluationCtx) = {
+    val entityId = attribute.cType match {
+      case SUBJECT => ctx.subjectId
+      case RESOURCE => ctx.resourceId
+      case _ => throw new IllegalArgumentException(s"You can only append to SUBJECT and RESOURCE attributes. Given attribute: $attribute")
+    }
+    ConcreteAppendAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx))
+  }
+}
+case class ConcreteAppendAttributeObligationAction(val entityId: String, val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
+object append {
+  def apply(attribute: Attribute, value: Value) =
+    new AppendAttributeObligationAction(attribute, value)
+}
