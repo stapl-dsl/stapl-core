@@ -237,7 +237,7 @@ case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with
  *
  * FIXME the "policy" in this line should not be possible:
  * 	Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
- *  ====== Why not? ======
+ *  ====== Why not? ====== => because this is a policy and the keyword "permit" should not be in here
  *
  * TODO does a rule need a target?
  */
