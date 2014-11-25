@@ -79,7 +79,7 @@ class Rule(id: String)(val effect: Effect,
     } else {
       if (condition.evaluate) {
         debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
-        Result(effect, obligationActions map {_.getConcrete})
+        Result(effect, obligationActions map { _.getConcrete })
       } else {
         debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
         NotApplicable
@@ -98,7 +98,7 @@ class Rule(id: String)(val effect: Effect,
           Failure(e)
         case Success(true) =>
           debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
-          Success(Result(effect, obligationActions map {_.getConcrete}))
+          Success(Result(effect, obligationActions map { _.getConcrete }))
         case Success(false) =>
           debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
           Success(Result(NotApplicable))
@@ -249,6 +249,9 @@ class OnlyIdRule(private val id: String) {
   def :=(t: EffectAndCondition): Rule =
     new Rule(id)(t.effect, t.condition)
 
+  def :=(t: EffectAndObligationActions): Rule =
+    new Rule(id)(t.effect)
+
   def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
     case `deny` => new Rule(id)(Deny)
     case `permit` => new Rule(id)(Permit)
@@ -280,6 +283,9 @@ class EffectAndCondition(val effect: Effect, val condition: Expression) {
 class EffectConditionAndObligationActions(
   val effect: Effect, val condition: Expression, val obligationActions: ObligationAction*)
 
+class EffectAndObligationActions(
+  val effect: Effect, val obligationActions: ObligationAction*)
+
 class EffectKeyword // FIXME this cannot be the best way to do this...
 case object deny extends EffectKeyword {
   /**
@@ -294,6 +300,9 @@ case object permit extends EffectKeyword {
    */
   def iff(condition: Expression): EffectAndCondition =
     new EffectAndCondition(Permit, condition)
+
+  def performing(obligationActions: ObligationAction*): EffectAndObligationActions =
+    new EffectAndObligationActions(Permit, obligationActions: _*)
 }
 
 class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) {
