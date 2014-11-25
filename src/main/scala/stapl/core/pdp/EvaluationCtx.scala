@@ -160,6 +160,9 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
                 Failure(new AttributeNotFoundException(attribute))
               case Some(value) =>
                 debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to futures cache")
+                // TODO add to _employedAttributes here, but this requires synchronization and probably 
+                // negatively affects performance => maybe add an option to EvaluationCtx to indicate
+                // whether it should keep employed attributes or not
                 Success(value)
             }
           }

@@ -151,7 +151,7 @@ class PDP(policy: AbstractPolicy,
           }
         }
         // return the result with the remaining obligations
-        new Result(result.decision, remainingObligations.toList, result.employedAttributes)
+        new Result(result.decision, remainingObligations.toList, ctx.employedAttributes)
     }
   }
 
