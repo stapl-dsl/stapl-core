@@ -293,6 +293,9 @@ case object deny extends EffectKeyword {
    */
   def iff(condition: Expression): EffectAndCondition =
     new EffectAndCondition(Deny, condition)
+
+  def performing(obligationActions: ObligationAction*): EffectAndObligationActions =
+    new EffectAndObligationActions(Deny, obligationActions: _*)
 }
 case object permit extends EffectKeyword {
   /**
