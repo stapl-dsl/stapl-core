@@ -22,31 +22,31 @@ package stapl.core
 import stapl.core.pdp.EvaluationCtx
 
 /**
- * An obligation consists of an action that should be fulfilled and the 
+ * An obligation consists of an action that should be fulfilled and the
  * effect on which the action should be fulfilled.
  */
 case class Obligation(val action: ObligationAction, val fulfillOn: Effect)
 
 /**
- * Traits for representing obligations: 
- * 
+ * Traits for representing obligations:
+ *
  * - ObligationAction: the obligation actions that can be specified in policies,
  * 		but can still contain attribute references that should be concretized
  *   	using the evaluation context.
- * 
+ *
  * - ConcreteObligationAction: the concretized obligation actions
- * 
+ *
  * - SimpleObligationAction: a simple trait for obligation actions that are can be specified
  * 		in policies, but do not need special logic to be concretized (e.g., they do not
- *   	contain attribute references, only literal values) 
+ *   	contain attribute references, only literal values)
  */
 trait ObligationAction {
-  
+
   def getConcrete(implicit ctx: EvaluationCtx): ConcreteObligationAction
 }
 trait ConcreteObligationAction
 trait SimpleObligationAction extends ObligationAction with ConcreteObligationAction {
-  
+
   override def getConcrete(implicit ctx: EvaluationCtx) = this
 }
 
@@ -54,7 +54,7 @@ trait SimpleObligationAction extends ObligationAction with ConcreteObligationAct
  * Logging
  */
 case class LogObligationAction(val msg: Value) extends ObligationAction {
-  
+
   def getConcrete(implicit ctx: EvaluationCtx) = ConcreteLogObligationAction(msg.getConcreteValue(ctx).representation.toString)
 }
 case class ConcreteLogObligationAction(val msg: String) extends ConcreteObligationAction
@@ -71,44 +71,38 @@ object mail {
 }
 
 /**
- * Updating attribute values
+ * The multiple ways of changing attribute values
  */
-case class UpdateAttributeObligationAction(val attribute: Attribute, val value: Value) extends ObligationAction {
-  
+sealed abstract class AttributeChangeType
+case object Update extends AttributeChangeType
+case object Append extends AttributeChangeType
+case class ChangeAttributeObligationAction(val attribute: Attribute, val value: Value, 
+    val changeType: AttributeChangeType) extends ObligationAction {
+
   def getConcrete(implicit ctx: EvaluationCtx) = {
     val entityId = attribute.cType match {
       case SUBJECT => ctx.subjectId
       case RESOURCE => ctx.resourceId
       case _ => throw new IllegalArgumentException(s"You can only update SUBJECT and RESOURCE attributes. Given attribute: $attribute")
     }
-    ConcreteUpdateAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx))
+    ConcreteChangeAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx), changeType)
   }
 }
-case class ConcreteUpdateAttributeObligationAction(val entityId: String, val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
+case class ConcreteChangeAttributeObligationAction(val entityId: String, val attribute: Attribute, 
+    val value: ConcreteValue, val changeType: AttributeChangeType) extends ConcreteObligationAction
+
+/**
+ * Updating attribute values
+ */
 object update {
   def apply(attribute: Attribute, value: Value) =
-    new UpdateAttributeObligationAction(attribute, value)
+    new ChangeAttributeObligationAction(attribute, value, Update)
 }
 
 /**
  * Appending to attribute values
  */
-case class AppendAttributeObligationAction(val attribute: Attribute, val value: Value) extends ObligationAction {
-  if(!attribute.isList) {
-    throw new IllegalArgumentException(s"You can only append to list attributes. Given attribute: $attribute")
-  }
-  
-  def getConcrete(implicit ctx: EvaluationCtx) = {
-    val entityId = attribute.cType match {
-      case SUBJECT => ctx.subjectId
-      case RESOURCE => ctx.resourceId
-      case _ => throw new IllegalArgumentException(s"You can only append to SUBJECT and RESOURCE attributes. Given attribute: $attribute")
-    }
-    ConcreteAppendAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx))
-  }
-}
-case class ConcreteAppendAttributeObligationAction(val entityId: String, val attribute: Attribute, val value: ConcreteValue) extends ConcreteObligationAction
 object append {
   def apply(attribute: Attribute, value: Value) =
-    new AppendAttributeObligationAction(attribute, value)
+    new ChangeAttributeObligationAction(attribute, value, Append)
 }
