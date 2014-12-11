@@ -82,7 +82,7 @@ class PDP(policy: AbstractPolicy,
    * Evaluate the policy of this PDP with given evaluation id and request context
    * and return the result. This will employ the attribute finder of this PDP.
    */
-  def evaluate(evaluationId: Long, ctx: RequestCtx): Result =
+  def evaluate(evaluationId: String, ctx: RequestCtx): Result =
     evaluate(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
 
   /**
@@ -126,7 +126,7 @@ class PDP(policy: AbstractPolicy,
    * Evaluate the policy of this PDP with given evaluation id and request context
    * and return the result. This will employ the attribute finder of this PDP.
    */
-  def evaluateAsync(evaluationId: Long, ctx: RequestCtx): Future[Result] =
+  def evaluateAsync(evaluationId: String, ctx: RequestCtx): Future[Result] =
     evaluateAsync(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
 
   /**
@@ -175,7 +175,7 @@ class PDP(policy: AbstractPolicy,
    * Evaluate the policy of this PDP with given evaluation id and request context
    * and return the result. This will employ the attribute finder of this PDP.
    */
-  def evaluateAwaitAsync(evaluationId: Long, ctx: RequestCtx): Result =
+  def evaluateAwaitAsync(evaluationId: String, ctx: RequestCtx): Result =
     evaluateAwaitAsync(new BasicEvaluationCtx(evaluationId, ctx, attributeFinder, remoteEvaluator))
 
   /**

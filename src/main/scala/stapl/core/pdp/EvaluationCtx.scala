@@ -36,6 +36,10 @@ import scala.concurrent.blocking
 import scala.concurrent.ExecutionContext.Implicits.global
 import stapl.core.CombinationAlgorithmImplementationBundle
 import scala.util.{ Try, Success, Failure }
+import stapl.core.SUBJECT
+import stapl.core.RESOURCE
+import stapl.core.ACTION
+import stapl.core.ENVIRONMENT
 
 /**
  * The base class of the context for evaluating a policy. This context
@@ -49,7 +53,7 @@ import scala.util.{ Try, Success, Failure }
  */
 trait EvaluationCtx {
 
-  def evaluationId: Long
+  def evaluationId: String
   def subjectId: String
   def resourceId: String
   def actionId: String
@@ -69,7 +73,7 @@ trait EvaluationCtx {
  * stores the subject id, the resource id, the action id and stores found
  * attribute values in a cache for this evaluation context.
  */
-class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
+class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
   finder: AttributeFinder, override val remoteEvaluator: RemoteEvaluator,
   bundle: CombinationAlgorithmImplementationBundle = SimpleCombinationAlgorithmImplementationBundle) extends EvaluationCtx with Logging {
 
@@ -111,8 +115,14 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
       case None => { // Not in the cache
         finder.find(this, attribute) match {
           case None =>
-            debug(s"Didn't find value of $attribute anywhere, throwing exception")
-            throw new AttributeNotFoundException(attribute)
+            val entityId = attribute.cType match {
+              case SUBJECT => subjectId
+              case RESOURCE => resourceId
+              case ACTION => "ACTION??" // we don't support this
+              case ENVIRONMENT => "ENVIRONMENT??" // we don't support this
+            }
+            debug(s"Didn't find value of $attribute for entity $entityId anywhere, throwing exception")
+            throw new AttributeNotFoundException(entityId, attribute)
           case Some(value) =>
             attributeCache(attribute) = value // add to cache
             _employedAttributes(attribute) = value
@@ -156,8 +166,14 @@ class BasicEvaluationCtx(override val evaluationId: Long, request: RequestCtx,
           blocking {
             finder.find(this, attribute) match {
               case None =>
-                debug(s"Didn't find value of $attribute anywhere, returning Failure")
-                Failure(new AttributeNotFoundException(attribute))
+                val entityId = attribute.cType match {
+                  case SUBJECT => subjectId
+                  case RESOURCE => resourceId
+                  case ACTION => "ACTION??" // we don't support this
+                  case ENVIRONMENT => "ENVIRONMENT??" // we don't support this
+                }
+                debug(s"Didn't find value of $attribute for entity $entityId anywhere, returning Failure")
+                Failure(new AttributeNotFoundException(entityId, attribute))
               case Some(value) =>
                 debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to futures cache")
                 // TODO add to _employedAttributes here, but this requires synchronization and probably 

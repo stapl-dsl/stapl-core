@@ -11,7 +11,7 @@ trait TimestampGenerator {
    * Returns a unique timestamp that is guaranteed to be higher than all previously
    * generated timestamps.
    */
-  def getTimestamp(): Long
+  def getTimestamp(): String
 }
 
 /**
@@ -28,9 +28,9 @@ class SimpleTimestampGenerator extends TimestampGenerator {
    * exception in uniqueness in case of long roll-over, but this is assumed to fall
    * outside the expected lifespan of any request that might still be executing system-wide.
    */
-  override def getTimestamp(): Long = {
+  override def getTimestamp(): String = {
     counter = counter + 1
-    counter
+    s"$counter"
   }
 
 }
