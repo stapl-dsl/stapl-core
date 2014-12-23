@@ -122,7 +122,7 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
               case ENVIRONMENT => "ENVIRONMENT??" // we don't support this
             }
             debug(s"Didn't find value of $attribute for entity $entityId anywhere, throwing exception")
-            throw new AttributeNotFoundException(entityId, attribute)
+            throw new AttributeNotFoundException(evaluationId, entityId, attribute)
           case Some(value) =>
             attributeCache(attribute) = value // add to cache
             _employedAttributes(attribute) = value
@@ -173,7 +173,7 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
                   case ENVIRONMENT => "ENVIRONMENT??" // we don't support this
                 }
                 debug(s"Didn't find value of $attribute for entity $entityId anywhere, returning Failure")
-                Failure(new AttributeNotFoundException(entityId, attribute))
+                Failure(new AttributeNotFoundException(evaluationId, entityId, attribute))
               case Some(value) =>
                 debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to futures cache")
                 // TODO add to _employedAttributes here, but this requires synchronization and probably 
