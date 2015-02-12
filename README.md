@@ -267,7 +267,7 @@ If you don't know where to look, try [http://scala-ide.org/][10].
 
 ```
 > git clone https://github.com/stapl-dsl/stapl-core
-> cd stapl
+> cd stapl-core
 > mvn install
 ```
 
