@@ -86,11 +86,6 @@ package object core {
    */
   implicit def decision2Result(decision: Decision): Result = Result(decision)
 
-  /**
-   * Implicit for the natural policy language.
-   */
-  implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
-
   
 
   /**
