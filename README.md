@@ -255,7 +255,9 @@ Here are a few simple steps you can follow to get started with STAPL. If you wan
 
 STAPL was built using Scala 2.10. How to install Scala depends on your operating system. For Fedora:
 
-> &gt; sudo yum install scala
+```
+> sudo yum install scala
+```
 
 #### 2. Get a good Scala editor
 
@@ -263,9 +265,11 @@ If you don't know where to look, try [http://scala-ide.org/][10].
 
 #### 2. Get STAPL and install it locally in Maven
 
-> &gt; git clone https://github.com/maartendecat/stapl/
-> &gt; cd stapl
-> &gt; mvn install
+```
+> git clone https://github.com/stapl-dsl/stapl-core
+> cd stapl-core
+> mvn install
+```
 
 #### 3. Create a new Scala Maven project
 
@@ -275,11 +279,13 @@ In the Scala IDE: Create a new Maven project with archetype `scala-archetype-sim
 
 Add the following lines to the `<dependencies>` section in your `pom.xml`:
 
+```XML
     <dependency>
     	<groupId>stapl</groupId>
     	<artifactId>stapl-core</artifactId>
     	<version>0.0.1-SNAPSHOT</version>
     </dependency>
+```
 
 #### 5. Create a new policy
 
