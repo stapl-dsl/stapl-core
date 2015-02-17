@@ -24,6 +24,8 @@ package mypackage
 import stapl.core._
 
 object PolicyFromTheReadMe extends BasicPolicy {
+    import stapl.core.dsl._
+    
     subject.roles		= ListAttribute(String)
     subject.treated		= ListAttribute(String)
     resource.type_ 	    = SimpleAttribute(String)
@@ -297,6 +299,7 @@ For example, add this simple policy to the end of the `App.scala` file generated
 import stapl.core._
 
 object ExamplePolicy extends BasicPolicy {
+  import stapl.core.dsl._
   
   subject.roles = ListAttribute(String)
 

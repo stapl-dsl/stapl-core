@@ -17,7 +17,7 @@ import stapl.core._
  *
  * FIXME the "policy" in this line should not be possible:
  * 	Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
- *  ====== Why not? ======
+ *  ====== Why not? ====== => because this is a policy and the keyword "permit" should not be in here
  *
  * TODO does a rule need a target?
  */
@@ -28,6 +28,9 @@ class OnlyIdRule(private val id: String) {
 
   def :=(t: EffectAndCondition): Rule =
     new Rule(id)(t.effect, t.condition)
+
+  def :=(t: EffectAndObligationActions): Rule =
+    new Rule(id)(t.effect, AlwaysTrue, List(t.obligationActions: _*))
 
   def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
     case `deny` => new Rule(id)(Deny)
@@ -60,6 +63,9 @@ class EffectAndCondition(val effect: Effect, val condition: Expression) {
 class EffectConditionAndObligationActions(
   val effect: Effect, val condition: Expression, val obligationActions: ObligationAction*)
 
+class EffectAndObligationActions(
+  val effect: Effect, val obligationActions: ObligationAction*)
+
 class EffectKeyword // FIXME this cannot be the best way to do this...
 case object deny extends EffectKeyword {
   /**
@@ -67,6 +73,9 @@ case object deny extends EffectKeyword {
    */
   def iff(condition: Expression): EffectAndCondition =
     new EffectAndCondition(Deny, condition)
+
+  def performing(obligationActions: ObligationAction*): EffectAndObligationActions =
+    new EffectAndObligationActions(Deny, obligationActions: _*)
 }
 case object permit extends EffectKeyword {
   /**
@@ -74,6 +83,9 @@ case object permit extends EffectKeyword {
    */
   def iff(condition: Expression): EffectAndCondition =
     new EffectAndCondition(Permit, condition)
+
+  def performing(obligationActions: ObligationAction*): EffectAndObligationActions =
+    new EffectAndObligationActions(Permit, obligationActions: _*)
 }
 
 class TargetPCAAndSubpolicies(val target: Expression, val pca: CombinationAlgorithm, val subpolicies: AbstractPolicy*) {
