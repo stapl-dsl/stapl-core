@@ -220,6 +220,7 @@ case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with
   override def evaluateAsync(implicit ctx: EvaluationCtx): Future[Try[Result]] = ???
 
   override def isApplicableAsync(implicit ctx: EvaluationCtx): Future[Try[Boolean]] = ???
+<<<<<<< HEAD
 }
 
 /**
@@ -370,4 +371,6 @@ object Rule { // not really a companion object of Rule, but the start of the nat
 object Policy {
   def apply(id: String) =
     new OnlyIdPolicy(id)
+=======
+>>>>>>> master
 }

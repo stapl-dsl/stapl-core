@@ -36,7 +36,8 @@ object PolicyIdTest {
  * Some tests to see whether policy ids are generated correctly.
  */
 class PolicyIdTest extends AssertionsForJUnit{
-
+  
+  import stapl.core.dsl._
   
   @Before def setup() {
     // nothing to do
