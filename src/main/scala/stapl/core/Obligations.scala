@@ -58,17 +58,13 @@ case class LogObligationAction(val msg: Value) extends ObligationAction {
   def getConcrete(implicit ctx: EvaluationCtx) = ConcreteLogObligationAction(msg.getConcreteValue(ctx).representation.toString)
 }
 case class ConcreteLogObligationAction(val msg: String) extends ConcreteObligationAction
-object log {
-  def apply(msg: Value) = new LogObligationAction(msg)
-}
+
 
 /**
  * Mailing
  */
 case class MailObligationAction(val to: String, val msg: String) extends SimpleObligationAction
-object mail {
-  def apply(to: String, msg: String) = new MailObligationAction(to, msg)
-}
+
 
 /**
  * The multiple ways of changing attribute values
@@ -91,18 +87,3 @@ case class ChangeAttributeObligationAction(val attribute: Attribute, val value: 
 case class ConcreteChangeAttributeObligationAction(val entityId: String, val attribute: Attribute, 
     val value: ConcreteValue, val changeType: AttributeChangeType) extends ConcreteObligationAction
 
-/**
- * Updating attribute values
- */
-object update {
-  def apply(attribute: Attribute, value: Value) =
-    new ChangeAttributeObligationAction(attribute, value, Update)
-}
-
-/**
- * Appending to attribute values
- */
-object append {
-  def apply(attribute: Attribute, value: Value) =
-    new ChangeAttributeObligationAction(attribute, value, Append)
-}

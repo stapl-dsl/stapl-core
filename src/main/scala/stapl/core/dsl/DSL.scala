@@ -151,3 +151,26 @@ object Policy {
   def apply(id: String) =
     new OnlyIdPolicy(id)
 }
+
+
+object log {
+  def apply(msg: Value) = new LogObligationAction(msg)
+}
+object mail {
+  def apply(to: String, msg: String) = new MailObligationAction(to, msg)
+}
+/**
+ * Updating attribute values
+ */
+object update {
+  def apply(attribute: Attribute, value: Value) =
+    new ChangeAttributeObligationAction(attribute, value, Update)
+}
+
+/**
+ * Appending to attribute values
+ */
+object append {
+  def apply(attribute: Attribute, value: Value) =
+    new ChangeAttributeObligationAction(attribute, value, Append)
+}
