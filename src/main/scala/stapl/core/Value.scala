@@ -34,7 +34,6 @@ trait Value {
   val isList: Boolean
   
   def getConcreteValue(ctx: EvaluationCtx): ConcreteValue
-  def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]]
   
   private def typeCheck(that: Value) {
     AttributeType.checkType(that.aType, this.aType)

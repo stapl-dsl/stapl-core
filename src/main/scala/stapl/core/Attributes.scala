@@ -30,9 +30,6 @@ sealed abstract class Attribute(val cType: AttributeContainerType, val name: Str
 
   override def getConcreteValue(ctx: EvaluationCtx) =
     ctx.findAttribute(this)
-
-  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]] =
-    ctx.findAttributeAsync(this)
 }
 object Attribute {
 

@@ -44,8 +44,6 @@ trait ConcreteValue extends Value with Serializable {
   
   override def getConcreteValue(ctx: EvaluationCtx): ConcreteValue = this
   
-  override def getConcreteValueAsync(ctx: EvaluationCtx): Future[Try[ConcreteValue]] = Future { Success(this) }
-  
   val representation: Any
   
   def equalRepr(value: ConcreteValue): Boolean = this.representation == value.representation

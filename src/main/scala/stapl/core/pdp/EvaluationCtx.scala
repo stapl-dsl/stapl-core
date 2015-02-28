@@ -61,7 +61,6 @@ trait EvaluationCtx {
   def cachedAttributes: Map[Attribute, ConcreteValue]
   def employedAttributes: Map[Attribute, ConcreteValue]
   protected[core] def findAttribute(attribute: Attribute): ConcreteValue
-  protected[core] def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]]
   protected[core] def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation
 
   // TODO add type checking here
@@ -144,49 +143,6 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
   // to simplify the rest of the code
   for ((attribute, value) <- request.allAttributes) {
     attributeFutures(attribute) = Future successful Success(value)
-  }
-
-  /**
-   * TODO 	should this be an actor to avoid concurrency issues or race conditions? Another option:
-   * 		make attributeFutures a concurrent map. On the other hand: aren't we sure that all policy
-   *   		evaluation code except from attribute fetch itself is performed in the same thread?
-   */
-  override def findAttributeAsync(attribute: Attribute): Future[Try[ConcreteValue]] = {
-    attributeFutures.get(attribute) match {
-      case Some(future) =>
-        // we have already issued a future to fetch this attribute => return this one
-        debug("FLOW: found future for " + attribute + " in map")
-        future
-      case None => {
-        // this is the first time this attribute is requested => issue and return a new
-        // future to fetch the attribute
-        // Note that all cached attributes are also present in the attributeFutures, so no
-        // need to check or update the attribute cache here
-        val f = Future {
-          blocking {
-            finder.find(this, attribute) match {
-              case None =>
-                val entityId = attribute.cType match {
-                  case SUBJECT => subjectId
-                  case RESOURCE => resourceId
-                  case ACTION => "ACTION??" // we don't support this
-                  case ENVIRONMENT => "ENVIRONMENT??" // we don't support this
-                }
-                debug(s"Didn't find value of $attribute for entity $entityId anywhere, returning Failure")
-                Failure(new AttributeNotFoundException(evaluationId, entityId, attribute))
-              case Some(value) =>
-                debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to futures cache")
-                // TODO add to _employedAttributes here, but this requires synchronization and probably 
-                // negatively affects performance => maybe add an option to EvaluationCtx to indicate
-                // whether it should keep employed attributes or not
-                Success(value)
-            }
-          }
-        }
-        attributeFutures(attribute) = f
-        f
-      }
-    }
   }
 
   /**

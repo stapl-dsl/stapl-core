@@ -45,19 +45,6 @@ case class Addition(left: Value, right: Value) extends Operation {
     val rightValue = right.getConcreteValue(ctx)    
     leftValue.add(rightValue)
   }
-  
-  override def getConcreteValueAsync(ctx: EvaluationCtx) = {
-    val leftValue = left.getConcreteValueAsync(ctx)
-    val rightValue = right.getConcreteValueAsync(ctx)
-    
-    for {
-      ol <- leftValue
-      or <- rightValue
-    } yield for {
-      l <- ol
-      r <- or
-    } yield l.add(r)
-  }
 }
 
 case class Subtraction(left: Value, right: Value) extends Operation {
@@ -79,19 +66,6 @@ case class Subtraction(left: Value, right: Value) extends Operation {
     val rightValue = right.getConcreteValue(ctx)
     
     leftValue.subtract(rightValue)
-  }
-  
-  override def getConcreteValueAsync(ctx: EvaluationCtx) = {
-    val leftValue = left.getConcreteValueAsync(ctx)
-    val rightValue = right.getConcreteValueAsync(ctx)
-    
-    for {
-      ol <- leftValue
-      or <- rightValue
-    } yield for {
-      l <- ol
-      r <- or
-    } yield l.subtract(r)
   }
 }
 
@@ -115,19 +89,6 @@ case class Multiplication(left: Value, right: Value) extends Operation {
     
     leftValue.multiply(rightValue)
   }
-  
-  override def getConcreteValueAsync(ctx: EvaluationCtx) = {
-    val leftValue = left.getConcreteValueAsync(ctx)
-    val rightValue = right.getConcreteValueAsync(ctx)
-    
-    for {
-      ol <- leftValue
-      or <- rightValue
-    } yield for {
-      l <- ol
-      r <- or
-    } yield l.multiply(r)
-  }
 }
 
 case class Division(left: Value, right: Value) extends Operation {
@@ -150,19 +111,6 @@ case class Division(left: Value, right: Value) extends Operation {
     
     leftValue.divide(rightValue)
   }
-  
-  override def getConcreteValueAsync(ctx: EvaluationCtx) = {
-    val leftValue = left.getConcreteValueAsync(ctx)
-    val rightValue = right.getConcreteValueAsync(ctx)
-    
-    for {
-      ol <- leftValue
-      or <- rightValue
-    } yield for {
-      l <- ol
-      r <- or
-    } yield l.divide(r)
-  }
 }
 
 case class AbsoluteValue(value: Value) extends Operation {
@@ -182,15 +130,5 @@ case class AbsoluteValue(value: Value) extends Operation {
     val cValue = value.getConcreteValue(ctx)
     
     cValue.abs()
-  }
-  
-  override def getConcreteValueAsync(ctx: EvaluationCtx) = {
-    val cValue = value.getConcreteValueAsync(ctx)
-    
-    for {
-      oc <- cValue
-    } yield for {
-      c <- oc
-    } yield c.abs()
   }
 }
