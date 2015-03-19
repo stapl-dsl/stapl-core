@@ -2,3 +2,6 @@
 *.class
 target/
 *~
+build.sbt
+project
+stapl-core.iml
