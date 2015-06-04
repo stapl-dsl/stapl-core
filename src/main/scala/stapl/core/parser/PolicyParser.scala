@@ -14,9 +14,9 @@ class PolicyParser {
   settings.nowarnings.value = true
   val interpreter = new IMain(settings)
   interpreter.beQuietDuring({
-    interpreter.addImports(
-      "stapl.core.{subject => _, resource => _, action => _, _}",
-      "stapl.core.templates._")
+    interpreter.interpret(
+      "import stapl.core.{subject => _, resource => _, action => _, _}\n" +
+      "import stapl.core.templates._")
   })
   
   /**
@@ -24,7 +24,7 @@ class PolicyParser {
    */
   def addImport(i: String) = {
     interpreter.beQuietDuring({
-      interpreter.addImports(i)
+      interpreter.interpret(s"import $i")
     })
   }
 
