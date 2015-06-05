@@ -19,7 +19,6 @@
  */
 package stapl.core
 
-import scala.language.dynamics
 import scala.language.experimental.macros
 import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
@@ -36,7 +35,7 @@ class AttributeDeclarationException(message: String = null, cause: Throwable = n
  * 
  * TODO mechanism is needed so attribute types are known (to the compiler) at compile time
  */
-abstract class AttributeContainer (cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
+abstract class AttributeContainer (cType: AttributeContainerType, attributes: Map[String, Attribute]) {
 
   final def this(cType: AttributeContainerType) = this(cType, Map())
   
