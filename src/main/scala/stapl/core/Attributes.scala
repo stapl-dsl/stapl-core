@@ -55,15 +55,6 @@ case class ListAttribute(ct: AttributeContainerType, n: String, at: AttributeTyp
 
 }
 
-object ListAttribute {
-  import AttributeConstruction.UninitializedAttribute
-  def apply(sType: AttributeType): UninitializedAttribute =
-    (None, new ListAttribute(_: AttributeContainerType, _: String, sType))
-
-  def apply(name: String, sType: AttributeType): UninitializedAttribute =
-    (Option(name), new ListAttribute(_: AttributeContainerType, _: String, sType))
-}
-
 case class SimpleAttribute(ct: AttributeContainerType, n: String, at: AttributeType)
   extends Attribute(ct, n, at) {
 
@@ -71,18 +62,4 @@ case class SimpleAttribute(ct: AttributeContainerType, n: String, at: AttributeT
 
   override def toString(): String = s"$cType.$name:$aType"
 
-}
-
-object SimpleAttribute {
-  import AttributeConstruction.UninitializedAttribute
-  def apply(sType: AttributeType): UninitializedAttribute =
-    (None, new SimpleAttribute(_: AttributeContainerType, _: String, sType))
-
-  def apply(name: String, sType: AttributeType): UninitializedAttribute =
-    (Option(name), new SimpleAttribute(_: AttributeContainerType, _: String, sType))
-}
-
-object AttributeConstruction {
-  private type AttributeConstructor = (AttributeContainerType, String) => Attribute
-  type UninitializedAttribute = (Option[String], AttributeConstructor)
 }

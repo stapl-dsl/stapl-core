@@ -56,9 +56,6 @@ abstract class AttributeContainer (cType: AttributeContainerType, attributes: Ma
   
   protected final def ListAttribute(aType: AttributeType): ListAttribute = macro AttributeContainer.listMacro
   
-  // import the type alias for uninitialized attributes
-  import AttributeConstruction.UninitializedAttribute
-  
   final private def set(name: String, attribute: Attribute) {
     if(attributes.contains(name)) {
       throw new AttributeDeclarationException(s"Error when assigning $cType.$name: already assigned")
