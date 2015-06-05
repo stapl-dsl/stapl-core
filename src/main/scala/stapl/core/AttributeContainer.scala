@@ -30,8 +30,14 @@ class AttributeDeclarationException(message: String = null, cause: Throwable = n
  * Base class for all attribute containers, such as the subject, resource, action and environment
  * in most STAPL policies.
  * 
- * By extending Dynamic, we can assign attributes to this attribute container as a variable. For example:
- * subject.roles = ListAttribute(String) -> subject.set("roles", ListAttribute(String))
+ * Usage example: 
+ * {{{
+ * object subject extends Subject {
+ *   val foo = SimpleAttribute(String)
+ *   val bar = ListAttribute(Number)
+ *   val baz = SimpleAttribute("bazz", String)
+ * }
+ * }}}
  * 
  * TODO mechanism is needed so attribute types are known (to the compiler) at compile time
  */
