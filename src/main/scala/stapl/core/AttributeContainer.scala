@@ -20,8 +20,10 @@
 package stapl.core
 
 import scala.language.dynamics
+import scala.language.experimental.macros
 import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
+import scala.reflect.macros.blackbox.Context
 
 class AttributeDeclarationException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause) 
 
@@ -34,24 +36,34 @@ class AttributeDeclarationException(message: String = null, cause: Throwable = n
  * 
  * TODO mechanism is needed so attribute types are known (to the compiler) at compile time
  */
-class AttributeContainer private(cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
+abstract class AttributeContainer (cType: AttributeContainerType, attributes: Map[String, Attribute]) extends Dynamic {
 
   final def this(cType: AttributeContainerType) = this(cType, Map())
+  
+  protected final def SimpleAttribute(name: String, aType: AttributeType): SimpleAttribute = {
+    val attribute = new SimpleAttribute(cType, name, aType)
+    set(name, attribute)
+    attribute
+  }
+  
+  protected final def SimpleAttribute(aType: AttributeType): SimpleAttribute = macro AttributeContainer.simpleMacro
+  
+  protected final def ListAttribute(name: String, aType: AttributeType): ListAttribute = {
+    val attribute = new ListAttribute(cType, name, aType)
+    set(name, attribute)
+    attribute
+  }
+  
+  protected final def ListAttribute(aType: AttributeType): ListAttribute = macro AttributeContainer.listMacro
   
   // import the type alias for uninitialized attributes
   import AttributeConstruction.UninitializedAttribute
   
-  final def set(name: String, attribute: UninitializedAttribute) {
-    val (optionName, attributeConstructor) = attribute
-    val actualAttribute = optionName match {
-      case Some(someName) => attributeConstructor(cType, someName)
-      case None => attributeConstructor(cType, name)
-    }
+  final private def set(name: String, attribute: Attribute) {
     if(attributes.contains(name)) {
       throw new AttributeDeclarationException(s"Error when assigning $cType.$name: already assigned")
     }
-    attributes += name -> actualAttribute
-    refinements.foreach(_.updateDynamic(name)(attribute))    
+    attributes += name -> attribute   
   }
   
   final def get(name: String): Attribute = {
@@ -61,21 +73,22 @@ class AttributeContainer private(cType: AttributeContainerType, attributes: Map[
     }    
   }
   
-  final def selectDynamic(name: String): Attribute = get(name)
-  
-  final def updateDynamic(name: String)(attribute: UninitializedAttribute){
-    set(name, attribute)
-  }
-  
-  private val refinements = Buffer.empty[AttributeContainer]
-  
-  final def refine(): AttributeContainer = {
-    val refinement = new AttributeContainer(cType, attributes.clone)
-    refinements += refinement
-    refinement
-  }
-  
   def allAttributes: Seq[Attribute] = attributes.values.toSeq
+}
+
+object AttributeContainer {
+  
+  def simpleMacro(c: Context)(aType: c.Tree) = {
+    import c.universe._
+    val name = c.internal.enclosingOwner.fullName.split('.').last
+    q"this.SimpleAttribute($name, $aType)"
+  }
+  
+  def listMacro(c: Context)(aType: c.Tree) = {
+    import c.universe._
+    val name = c.internal.enclosingOwner.fullName.split('.').last
+    q"this.ListAttribute($name, $aType)"
+  }
 }
 
 /**
@@ -89,7 +102,7 @@ case object RESOURCE extends AttributeContainerType
 case object ENVIRONMENT extends AttributeContainerType
 case object ACTION extends AttributeContainerType
 
-class SubjectAttributeContainer extends AttributeContainer(SUBJECT)
-class ResourceAttributeContainer extends AttributeContainer(RESOURCE)
-class EnvironmentAttributeContainer extends AttributeContainer(ENVIRONMENT)
-class ActionAttributeContainer extends AttributeContainer(ACTION)
+abstract class Subject extends AttributeContainer(SUBJECT)
+abstract class Resource extends AttributeContainer(RESOURCE)
+abstract class Environment extends AttributeContainer(ENVIRONMENT)
+abstract class Action extends AttributeContainer(ACTION)

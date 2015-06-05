@@ -20,16 +20,21 @@ object BasicPolicy {
   
   /**
    * USAGE: val (subject, action, resource, environment) = BasicPolicy.containers
+   * TODO put macro in seperate project!
    */
   def containers = {
-    val subject = new SubjectAttributeContainer
-    subject.id = SimpleAttribute(String) 
-    val resource = new ResourceAttributeContainer
-    resource.id = SimpleAttribute(String)
-    val action = new ActionAttributeContainer
-    action.id = SimpleAttribute(String) 
-    val environment = new EnvironmentAttributeContainer
+    /*val subject = new Subject {
+      val id = SimpleAttribute(String) 
+    }
+    val resource = new Resource {
+      val id = SimpleAttribute(String) 
+    }
+    val action = new Action {
+      val id = SimpleAttribute(String) 
+    }
+    val environment = new Environment{}
     
-    (subject, action, resource, environment)
+    (subject, action, resource, environment)*/
+    (null, null, null, null)
   }
 }

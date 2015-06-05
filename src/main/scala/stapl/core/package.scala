@@ -86,31 +86,4 @@ package object core {
    */
   implicit def decision2Result(decision: Decision): Result = Result(decision)
 
-  
-
-  /**
-   * The definitions of the standard subject, action, resource and environment.
-   * 
-   * Important: always create a new instance so multiple policies can work on
-   * multiple instances of these objects, but testing equality with the id attribute
-   * of every instance will always work.
-   * 
-   * TODO remove these default objects?
-   */
-  def subject: SubjectAttributeContainer = {
-    val subject = new SubjectAttributeContainer
-    subject.id = SimpleAttribute(String)
-    subject
-  }
-  def resource: ResourceAttributeContainer = {
-    val resource = new ResourceAttributeContainer
-    resource.id = SimpleAttribute(String)
-    resource
-  }
-  def action: ActionAttributeContainer = {
-    val action = new ActionAttributeContainer
-    action.id = SimpleAttribute(String)
-    action
-  }
-  def environment: EnvironmentAttributeContainer = new EnvironmentAttributeContainer
 }
