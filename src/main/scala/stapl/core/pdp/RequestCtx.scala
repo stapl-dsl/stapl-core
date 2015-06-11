@@ -21,15 +21,9 @@ package stapl.core.pdp
 
 import scala.collection.mutable.Map
 import stapl.core.Attribute
-import stapl.core.SimpleAttribute
-import stapl.core.String
-import stapl.core.ConcreteValue
-import stapl.core.string2Value
-import stapl.core.AttributeContainerType
 import stapl.core.SUBJECT
 import stapl.core.RESOURCE
 import stapl.core.ACTION
-import stapl.core.SimpleAttribute
 
 /**
  * A class used for representing the context of a request.
@@ -43,21 +37,21 @@ import stapl.core.SimpleAttribute
  * contain the ids of the subject, action and resource again).
  */
 class RequestCtx(val subjectId: String, val actionId: String, 
-    val resourceId: String, extraAttributes: (Attribute,ConcreteValue)*) {
+    val resourceId: String, extraAttributes: (Attribute[_],Any)*) {
   
   /*def this(subjectId: String, actionId: String, resourceId: String, extraAttributes: (Attribute,ConcreteValue)*) {
     this(subjectId, actionId, resourceId, extraAttributes.map{ case (attr, c) => ((attr.name, attr.cType), c) }: _*)
   }*/
   
-  val allAttributes: Map[Attribute, ConcreteValue] = Map(extraAttributes: _*)    
+  val allAttributes: Map[Attribute[_], Any] = Map(extraAttributes: _*)    
       
   // FIXME: these are not the same subject, resource and action as defined in BasicPolicy
   // For now, this works because the repeated definitions are the same, but we should'nt replicate
   // this definition. => idea: create a function to generate the subject, resoruce and action
   // and use this everwhere where you need subject/resource/action.id
-  allAttributes += SimpleAttribute(SUBJECT, "id", String) -> subjectId
-  allAttributes += SimpleAttribute(RESOURCE, "id", String) -> resourceId
-  allAttributes += SimpleAttribute(ACTION, "id", String) -> actionId 
+  allAttributes += Attribute[String](SUBJECT, "id") -> subjectId
+  allAttributes += Attribute[String](RESOURCE, "id") -> resourceId
+  allAttributes += Attribute[String](ACTION, "id") -> actionId 
   
   override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.allAttributes}" 
       

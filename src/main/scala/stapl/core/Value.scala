@@ -20,84 +20,25 @@
 package stapl.core
 
 import stapl.core.pdp.EvaluationCtx
-import scala.concurrent.Future
-import scala.util.{Try, Success, Failure}
+import scala.language.implicitConversions
 
 /**
- * The base trait for all attributes in policies. Each Value has a 
- * type and multiplicity (list or not).
+ * The base trait for all elements of expressions that encapsulate concrete values. 
+ * 
+ * @tparam T The type of the concrete value this Value represents.
  */
-trait Value {
-  
-  val aType: AttributeType
-  
-  val isList: Boolean
-  
-  def getConcreteValue(ctx: EvaluationCtx): ConcreteValue
-  
-  private def typeCheck(that: Value) {
-    AttributeType.checkType(that.aType, this.aType)
+trait Value[T] {
+  def getConcreteValue(ctx: EvaluationCtx): T
+}
+
+object Value {
+  /**
+   * Wraps a concrete value of type T in a Value[T].
+   */
+  def apply[T](something: T) = new Value[T] { 
+    def getConcreteValue(ctx: EvaluationCtx): T = something
+    override def toString = something.toString
   }
   
-  def in(that: Value): Expression = {
-    if (this.isList || !that.isList)
-      throw new UnsupportedOperationException("An in operation is only possible between a simple value and a list.")
-    typeCheck(that)
-    if (List(DateTimeDuration, DayDuration, TimeDuration) contains this.aType)
-      throw new UnsupportedOperationException("An in operation is not possible for durations.")
-    ValueIn(this, that)
-  }
-  
-  /*def contains(that: Value): Expression = {
-    if (!this.isList || that.isList)
-      throw new UnsupportedOperationException("An in/contains operation is only possible between a list and a simple value.")
-    typeCheck(that)
-    if (List(DateTimeDuration, DayDuration, TimeDuration) contains this.aType)
-      throw new UnsupportedOperationException("An in/contains operation is not possible for durations.")
-    ValueIn(that, this)
-  }*/
-    
-  
-  def ===(that: Value): Expression = {
-    if (this.isList || that.isList)
-      throw new UnsupportedOperationException("An equals operation is only possible between simple values.")
-    typeCheck(that)
-    if (List(DateTimeDuration, DayDuration, TimeDuration) contains this.aType)
-      throw new UnsupportedOperationException("An equals operation is not possible for durations.")
-    EqualsValue(this, that)
-  }
-  
-  // XXX added !==
-  def !==(that: Value): Expression = !(this === that)
-  
-  def gt(that: Value): Expression = {
-    if (this.isList || that.isList)
-      throw new UnsupportedOperationException("A comparison operation is only possible between simple values.")
-    typeCheck(that)
-    if (List(DateTimeDuration, DayDuration, TimeDuration) contains this.aType)
-      throw new UnsupportedOperationException("A comparison operation is not possible for durations.")
-    GreaterThanValue(this, that)
-  }
-  
-  def lt(that: Value): Expression = that gt this
-  
-  def gteq(that: Value): Expression = (this gt that) | (this === that)
-  
-  def lteq(that: Value): Expression = (this lt that) | (this === that)
-  
-  def +(that: Value): Operation = {
-    Addition(this, that)
-  }
-  
-  def -(that: Value): Operation = {
-    Subtraction(this, that)
-  }
-  
-  def *(that: Value): Operation = {
-    Multiplication(this, that)
-  }
-  
-  def /(that: Value): Operation = {
-    Division(this, that)
-  }
+  implicit def any2Value[T](t: T): Value[T] = Value(t)
 }

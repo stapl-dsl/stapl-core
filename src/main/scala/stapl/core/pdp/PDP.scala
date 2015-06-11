@@ -68,7 +68,7 @@ class PDP(policy: AbstractPolicy,
    * This will employ the attribute finder of this PDP.
    */
   def evaluate(subjectId: String, actionId: String,
-    resourceId: String, extraAttributes: (Attribute, ConcreteValue)*): Result =
+    resourceId: String, extraAttributes: (Attribute[_], Any)*): Result =
     evaluate(new RequestCtx(subjectId, actionId, resourceId, extraAttributes: _*))
 
   /**

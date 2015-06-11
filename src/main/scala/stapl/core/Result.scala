@@ -25,7 +25,7 @@ package stapl.core
  */
 case class Result(val decision: Decision, 
     val obligationActions: List[ConcreteObligationAction] = List.empty, 
-    val employedAttributes: Map[Attribute,ConcreteValue] = Map())
+    val employedAttributes: Map[Attribute[_],Any] = Map())
 
 /**
  * Trait for representing a Decision ( = Permit, Deny or NotApplicable).

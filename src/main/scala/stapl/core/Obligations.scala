@@ -53,7 +53,7 @@ trait SimpleObligationAction extends ObligationAction with ConcreteObligationAct
 /**
  * Logging
  */
-case class LogObligationAction(val msg: Value) extends ObligationAction {
+case class LogObligationAction(val msg: Value[String]) extends ObligationAction {
 
   def getConcrete(implicit ctx: EvaluationCtx) = ConcreteLogObligationAction(msg.getConcreteValue(ctx).representation.toString)
 }
@@ -72,7 +72,7 @@ case class MailObligationAction(val to: String, val msg: String) extends SimpleO
 sealed abstract class AttributeChangeType
 case object Update extends AttributeChangeType
 case object Append extends AttributeChangeType
-case class ChangeAttributeObligationAction(val attribute: Attribute, val value: Value, 
+case class ChangeAttributeObligationAction[T](val attribute: Attribute[T], val value: Value[T], 
     val changeType: AttributeChangeType) extends ObligationAction {
 
   def getConcrete(implicit ctx: EvaluationCtx) = {
@@ -84,6 +84,6 @@ case class ChangeAttributeObligationAction(val attribute: Attribute, val value: 
     ConcreteChangeAttributeObligationAction(entityId, attribute, value.getConcreteValue(ctx), changeType)
   }
 }
-case class ConcreteChangeAttributeObligationAction(val entityId: String, val attribute: Attribute, 
-    val value: ConcreteValue, val changeType: AttributeChangeType) extends ConcreteObligationAction
+case class ConcreteChangeAttributeObligationAction[T](val entityId: String, val attribute: Attribute[T], 
+    val value: T, val changeType: AttributeChangeType) extends ConcreteObligationAction
 

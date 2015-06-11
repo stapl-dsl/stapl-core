@@ -41,55 +41,41 @@ class AttributeDeclarationException(message: String = null, cause: Throwable = n
  * 
  * TODO mechanism is needed so attribute types are known (to the compiler) at compile time
  */
-abstract class AttributeContainer (cType: AttributeContainerType, attributes: Map[String, Attribute]) {
+abstract class AttributeContainer (cType: AttributeContainerType, attributes: Map[String, Attribute[_]]) {
 
   final def this(cType: AttributeContainerType) = this(cType, Map())
   
-  protected final def SimpleAttribute(name: String, aType: AttributeType): SimpleAttribute = {
-    val attribute = new SimpleAttribute(cType, name, aType)
+  protected final def Attribute[T](name: String): Attribute[T] = {
+    val attribute = new Attribute[T](cType, name)
     set(name, attribute)
     attribute
   }
   
-  protected final def SimpleAttribute(aType: AttributeType): SimpleAttribute = macro AttributeContainer.simpleMacro
+  protected final def Attribute[T]: Attribute[T] = macro AttributeContainer.attributeMacro[T]
   
-  protected final def ListAttribute(name: String, aType: AttributeType): ListAttribute = {
-    val attribute = new ListAttribute(cType, name, aType)
-    set(name, attribute)
-    attribute
-  }
-  
-  protected final def ListAttribute(aType: AttributeType): ListAttribute = macro AttributeContainer.listMacro
-  
-  final private def set(name: String, attribute: Attribute) {
+  final private def set(name: String, attribute: Attribute[_]) {
     if(attributes.contains(name)) {
       throw new AttributeDeclarationException(s"Error when assigning $cType.$name: already assigned")
     }
     attributes += name -> attribute   
   }
   
-  final def get(name: String): Attribute = {
+  final def get(name: String): Attribute[_] = {
     try attributes(name)
     catch {
       case _: NoSuchElementException => throw new AttributeDoesNotExistException(name)
     }    
   }
   
-  def allAttributes: Seq[Attribute] = attributes.values.toSeq
+  def allAttributes: Seq[Attribute[_]] = attributes.values.toSeq
 }
 
 object AttributeContainer {
   
-  def simpleMacro(c: Context)(aType: c.Tree) = {
+  def attributeMacro[T : c.WeakTypeTag](c: Context) = {
     import c.universe._
     val name = c.internal.enclosingOwner.fullName.split('.').last
-    q"this.SimpleAttribute($name, $aType)"
-  }
-  
-  def listMacro(c: Context)(aType: c.Tree) = {
-    import c.universe._
-    val name = c.internal.enclosingOwner.fullName.split('.').last
-    q"this.ListAttribute($name, $aType)"
+    q"this.Attribute[${weakTypeOf[T]}]($name)"
   }
 }
 

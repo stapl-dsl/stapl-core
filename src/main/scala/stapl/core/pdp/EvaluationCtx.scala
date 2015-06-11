@@ -58,9 +58,9 @@ trait EvaluationCtx {
   def resourceId: String
   def actionId: String
   def remoteEvaluator: RemoteEvaluator
-  def cachedAttributes: Map[Attribute, ConcreteValue]
-  def employedAttributes: Map[Attribute, ConcreteValue]
-  protected[core] def findAttribute(attribute: Attribute): ConcreteValue
+  def cachedAttributes: Map[Attribute[_], Any]
+  def employedAttributes: Map[Attribute[_], Any]
+  protected[core] def findAttribute[T](attribute: Attribute[T]): T
   protected[core] def getCombinationAlgorithmImplementation(algo: CombinationAlgorithm): CombinationAlgorithmImplementation
 
   // TODO add type checking here
@@ -82,16 +82,16 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
 
   override val actionId: String = request.actionId
 
-  protected val attributeCache: scala.collection.mutable.Map[Attribute, ConcreteValue] = scala.collection.mutable.Map() //scala.collection.concurrent.TrieMap()
+  protected val attributeCache: scala.collection.mutable.Map[Attribute[_], Any] = scala.collection.mutable.Map() //scala.collection.concurrent.TrieMap()
 
-  override def cachedAttributes: Map[Attribute, ConcreteValue] = attributeCache.toMap
+  override def cachedAttributes: Map[Attribute[_], Any] = attributeCache.toMap
 
   // add all attributes given in the request to the attribute cache
   for ((attribute, value) <- request.allAttributes) {
     attributeCache(attribute) = value
   }
 
-  protected val _employedAttributes: scala.collection.mutable.Map[Attribute, ConcreteValue] = scala.collection.mutable.Map()
+  protected val _employedAttributes: scala.collection.mutable.Map[Attribute[_], Any] = scala.collection.mutable.Map()
 
   override def employedAttributes = _employedAttributes.toMap
 
@@ -104,12 +104,12 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
    * @throws	AttributeNotFoundException	If the attribute value isn't found
    */
   @throws[AttributeNotFoundException]("if the attribute value isn't found")
-  override def findAttribute(attribute: Attribute): ConcreteValue = {
+  override def findAttribute[T](attribute: Attribute[T]): T = {
     attributeCache.get(attribute) match {
       case Some(value) => {
         debug("FLOW: found value of " + attribute + " in cache: " + value)
         _employedAttributes(attribute) = value
-        value
+        value.asInstanceOf[T]
       }
       case None => { // Not in the cache
         finder.find(this, attribute) match {
@@ -126,23 +126,10 @@ class BasicEvaluationCtx(override val evaluationId: String, request: RequestCtx,
             attributeCache(attribute) = value // add to cache
             _employedAttributes(attribute) = value
             debug("FLOW: retrieved value of " + attribute + ": " + value + " and added to cache")
-            value
+            value.asInstanceOf[T]
         }
       }
     }
-  }
-
-  /**
-   * To make sure that we only request an attribute once from the database, we
-   * store all futures regarding a certain attribute. This way, we can return this
-   * future if an attribute is requested again after the first time.
-   */
-  private val attributeFutures = scala.collection.mutable.Map[Attribute, Future[Try[ConcreteValue]]]()
-
-  // immediately fill these attribute futures with the futures for the cached attributes
-  // to simplify the rest of the code
-  for ((attribute, value) <- request.allAttributes) {
-    attributeFutures(attribute) = Future successful Success(value)
   }
 
   /**

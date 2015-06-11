@@ -21,12 +21,10 @@ package stapl.core
 
 import java.util.Date
 import stapl.core.pdp.EvaluationCtx
-import scala.concurrent.Future
-import concurrent.ExecutionContext.Implicits.global
-import scala.util.{Try, Success, Failure}
+import scala.language.implicitConversions
 
 abstract class Expression {
-  def evaluate(implicit ctx: EvaluationCtx): Boolean
+  def evaluate(ctx: EvaluationCtx): Boolean
 
   final def &(that: Expression): Expression = And(this, that)
 
@@ -35,46 +33,25 @@ abstract class Expression {
   final def unary_!(): Expression = Not(this)
 }
 
-case object AlwaysTrue extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = true
-}
-case object AlwaysFalse extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = false
-}
-case class GreaterThanValue(value1: Value, value2: Value) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = {
-    val c1 = value1.getConcreteValue(ctx)
-    val c2 = value2.getConcreteValue(ctx)
-    c1.reprGreaterThan(c2)
-  }
-}
-case class BoolExpression(attribute: SimpleAttribute) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = {
-    val bool = attribute.getConcreteValue(ctx).representation
-    bool.asInstanceOf[Boolean]
-  }
+object Expression {
+  implicit def value2expression(value: Value[Boolean]): Expression = ValueExpression(value)
+  implicit def boolean2expression(value: Boolean): Expression = LiteralExpression(value)
 }
 
-case class EqualsValue(value1: Value, value2: Value) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = {
-    val c1 = value1.getConcreteValue(ctx)
-    val c2 = value2.getConcreteValue(ctx)
-    c1.equalRepr(c2)
-  }
+case class ValueExpression(value: Value[Boolean]) extends Expression {
+  override def evaluate(ctx: EvaluationCtx): Boolean = value.getConcreteValue(ctx)
 }
-case class ValueIn(value: Value, list: Value) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx): Boolean = {
-    val c = value.getConcreteValue(ctx)
-    val l = list.getConcreteValue(ctx)
-    l.reprContains(c)
-  }
+
+case class LiteralExpression(value: Boolean) extends Expression {
+  override def evaluate(ctx: EvaluationCtx): Boolean = value
 }
+
 case class And(expression1: Expression, expression2: Expression) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx) = expression1.evaluate && expression2.evaluate
+  override def evaluate(ctx: EvaluationCtx) = expression1.evaluate(ctx) && expression2.evaluate(ctx)
 }
 case class Or(expression1: Expression, expression2: Expression) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx) = expression1.evaluate || expression2.evaluate
+  override def evaluate(ctx: EvaluationCtx) = expression1.evaluate(ctx) || expression2.evaluate(ctx)
 }
 case class Not(expression: Expression) extends Expression {
-  override def evaluate(implicit ctx: EvaluationCtx) = !expression.evaluate
+  override def evaluate(ctx: EvaluationCtx) = !expression.evaluate(ctx)
 }
