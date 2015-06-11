@@ -21,10 +21,6 @@ package stapl.core
 
 import grizzled.slf4j.Logging
 import stapl.core.pdp.EvaluationCtx
-import scala.concurrent.Future
-import concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Promise
-import scala.util.{ Try, Success, Failure }
 
 /**
  * *******************************************
@@ -37,11 +33,11 @@ abstract class AbstractPolicy(val id: String) {
    * Each element in the policy tree should only return Obligations which
    * apply its decision.
    */
-  def evaluate(implicit ctx: EvaluationCtx): Result
+  def evaluate(ctx: EvaluationCtx): Result
 
   // TODO remove this from AbstractPolicy, Policy and RemotePolicy (this is only to be used 
   // internally in a Policy)
-  def isApplicable(implicit ctx: EvaluationCtx): Boolean
+  def isApplicable(ctx: EvaluationCtx): Boolean
 
   //def allIds: List[String]
 
@@ -66,18 +62,18 @@ abstract class AbstractPolicy(val id: String) {
  * Represents one rule.
  */
 class Rule(id: String)(val effect: Effect,
-  val condition: Expression = AlwaysTrue, val obligationActions: List[ObligationAction] = List.empty)
+  val condition: Expression = LiteralExpression(true), val obligationActions: List[ObligationAction] = List.empty)
   extends AbstractPolicy(id) with Logging {
 
-  override def evaluate(implicit ctx: EvaluationCtx): Result = {
+  override def evaluate(ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of Policy #$fqid (evaluation id #${ctx.evaluationId})")
-    if (!isApplicable) {
+    if (!isApplicable(ctx)) {
       debug(s"FLOW: Rule #$fqid was NotApplicable because of target")
       NotApplicable
     } else {
-      if (condition.evaluate) {
+      if (condition.evaluate(ctx)) {
         debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
-        Result(effect, obligationActions map { _.getConcrete })
+        Result(effect, obligationActions map { _.getConcrete(ctx) })
       } else {
         debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
         NotApplicable
@@ -88,7 +84,7 @@ class Rule(id: String)(val effect: Effect,
   /**
    * Rules always apply
    */
-  override def isApplicable(implicit ctx: EvaluationCtx): Boolean = true
+  override def isApplicable(ctx: EvaluationCtx): Boolean = true
 
   //override def allIds: List[String] = List(id)
 
@@ -98,7 +94,7 @@ class Rule(id: String)(val effect: Effect,
 /**
  * Represents a policy of one or more rules and/or subpolicies.
  */
-class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: CombinationAlgorithm,
+class Policy(id: String)(val target: Expression = LiteralExpression(true), val pca: CombinationAlgorithm,
   val subpolicies: List[AbstractPolicy], val obligations: List[Obligation] = List.empty)
   extends AbstractPolicy(id) with Logging {
 
@@ -114,12 +110,12 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
     distinctIds.size == ids.size
   }*/
 
-  override def evaluate(implicit ctx: EvaluationCtx): Result = {
+  override def evaluate(ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of PolicySet #$fqid")
-    if (isApplicable) {
+    if (isApplicable(ctx)) {
       val result = pca.combine(subpolicies, ctx)
       // add applicable obligations of our own
-      val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action.getConcrete)
+      val applicableObligationActions = result.obligationActions ::: obligations.filter(_.fulfillOn == result.decision).map(_.action.getConcrete(ctx))
       val finalResult = Result(result.decision, applicableObligationActions)
       debug(s"FLOW: PolicySet #$fqid returned $finalResult")
       finalResult
@@ -129,7 +125,7 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
     }
   }
 
-  override def isApplicable(implicit ctx: EvaluationCtx): Boolean = target.evaluate
+  override def isApplicable(ctx: EvaluationCtx): Boolean = target.evaluate(ctx)
 
   //override def allIds: List[String] = id :: subpolicies.flatMap(_.allIds)
 
@@ -147,7 +143,7 @@ class Policy(id: String)(val target: Expression = AlwaysTrue, val pca: Combinati
  */
 case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with Logging {
 
-  override def evaluate(implicit ctx: EvaluationCtx): Result = {
+  override def evaluate(ctx: EvaluationCtx): Result = {
     debug(s"FLOW: starting evaluation of Remote Policy #$fqid (evaluation id #${ctx.evaluationId})")
     val result = ctx.remoteEvaluator.findAndEvaluate(id, ctx)
     // TODO Filter obligations?
@@ -160,7 +156,7 @@ case class RemotePolicy(override val id: String) extends AbstractPolicy(id) with
    * provided for the case where one would like to know whether a policy is applicable in a certain
    * EvalutionCtx without evaluating it (???).
    */
-  override def isApplicable(implicit ctx: EvaluationCtx): Boolean = {
+  override def isApplicable(ctx: EvaluationCtx): Boolean = {
     warn("We are checking whether a remote policy is applicable without evaluating the policy. Are you sure this is what you want to do?")
     ctx.remoteEvaluator.findAndIsApplicable(id, ctx)
   }

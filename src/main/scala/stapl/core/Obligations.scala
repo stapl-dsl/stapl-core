@@ -42,12 +42,12 @@ case class Obligation(val action: ObligationAction, val fulfillOn: Effect)
  */
 trait ObligationAction {
 
-  def getConcrete(implicit ctx: EvaluationCtx): ConcreteObligationAction
+  def getConcrete(ctx: EvaluationCtx): ConcreteObligationAction
 }
 trait ConcreteObligationAction
 trait SimpleObligationAction extends ObligationAction with ConcreteObligationAction {
 
-  override def getConcrete(implicit ctx: EvaluationCtx) = this
+  override def getConcrete(ctx: EvaluationCtx) = this
 }
 
 /**
@@ -55,7 +55,7 @@ trait SimpleObligationAction extends ObligationAction with ConcreteObligationAct
  */
 case class LogObligationAction(val msg: Value[String]) extends ObligationAction {
 
-  def getConcrete(implicit ctx: EvaluationCtx) = ConcreteLogObligationAction(msg.getConcreteValue(ctx).representation.toString)
+  def getConcrete(ctx: EvaluationCtx) = ConcreteLogObligationAction(msg.getConcreteValue(ctx).toString)
 }
 case class ConcreteLogObligationAction(val msg: String) extends ConcreteObligationAction
 
@@ -75,7 +75,7 @@ case object Append extends AttributeChangeType
 case class ChangeAttributeObligationAction[T](val attribute: Attribute[T], val value: Value[T], 
     val changeType: AttributeChangeType) extends ObligationAction {
 
-  def getConcrete(implicit ctx: EvaluationCtx) = {
+  def getConcrete(ctx: EvaluationCtx) = {
     val entityId = attribute.cType match {
       case SUBJECT => ctx.subjectId
       case RESOURCE => ctx.resourceId
