@@ -1,7 +1,8 @@
 package stapl.core
 
 package object dsl {
-  
-  implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
-
+  type Subject = stapl.core.Subject
+  type Resource = stapl.core.Resource
+  type Action = stapl.core.Action
+  type Environment = stapl.core.Environment
 }

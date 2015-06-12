@@ -1,6 +1,7 @@
 package stapl.core.dsl
 
 import stapl.core._
+import scala.language.implicitConversions
 
 /**
  * **************************************
@@ -52,6 +53,10 @@ class ObligationActionWithOn(val obligationAction: ObligationAction) {
 
   def on(effect: Effect): Obligation =
     new Obligation(obligationAction, effect)
+}
+
+object ObligationActionWithOn {
+  implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
 }
 
 class EffectAndCondition(val effect: Effect, val condition: Expression) {
