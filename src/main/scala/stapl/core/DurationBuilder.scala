@@ -20,6 +20,7 @@
 package stapl.core
 
 import org.joda.time.Period
+import scala.language.implicitConversions
 
 class DurationBuilder(val number: Int) extends AnyVal {
 
@@ -36,6 +37,10 @@ class DurationBuilder(val number: Int) extends AnyVal {
   def seconds = Seconds(number)
   
   def millis = Millis(number)
+}
+
+object DurationBuilder {
+  implicit def int2DurationBuilder(int: Int) = new DurationBuilder(int)
 }
 
 object Years {

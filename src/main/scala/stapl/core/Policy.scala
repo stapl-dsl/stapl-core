@@ -69,14 +69,14 @@ class Rule(id: String)(val effect: Effect,
     debug(s"FLOW: starting evaluation of Policy #$fqid (evaluation id #${ctx.evaluationId})")
     if (!isApplicable(ctx)) {
       debug(s"FLOW: Rule #$fqid was NotApplicable because of target")
-      NotApplicable
+      Result(NotApplicable)
     } else {
       if (condition.evaluate(ctx)) {
         debug(s"FLOW: Rule #$fqid returned $effect with obligations $obligationActions")
         Result(effect, obligationActions map { _.getConcrete(ctx) })
       } else {
         debug(s"FLOW: Rule #$fqid was NotApplicable because of condition")
-        NotApplicable
+        Result(NotApplicable)
       }
     }
   }
@@ -121,7 +121,7 @@ class Policy(id: String)(val target: Expression = LiteralExpression(true), val p
       finalResult
     } else {
       debug(s"FLOW: PolicySet #$fqid was NotApplicable because of target")
-      NotApplicable
+      Result(NotApplicable)
     }
   }
 

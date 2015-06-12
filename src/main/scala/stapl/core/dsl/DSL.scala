@@ -30,7 +30,7 @@ class OnlyIdRule(private val id: String) {
     new Rule(id)(t.effect, t.condition)
 
   def :=(t: EffectAndObligationActions): Rule =
-    new Rule(id)(t.effect, AlwaysTrue, List(t.obligationActions: _*))
+    new Rule(id)(t.effect, LiteralExpression(true), List(t.obligationActions: _*))
 
   def :=(effectKeyword: EffectKeyword): Rule = effectKeyword match {
     case `deny` => new Rule(id)(Deny)
@@ -110,7 +110,7 @@ class OnlyTarget(val target: Expression) {
 
 }
 object when {
-  def apply(target: Expression = AlwaysTrue): OnlyTarget =
+  def apply(target: Expression = LiteralExpression(true)): OnlyTarget =
     new OnlyTarget(target)
 }
 object apply {
@@ -119,16 +119,16 @@ object apply {
    * If no target is given for a policy set
    */
   def apply(pca: CombinationAlgorithm): TargetAndPCA =
-    new TargetAndPCA(AlwaysTrue, pca)
+    new TargetAndPCA(LiteralExpression(true), pca)
 
   def PermitOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies =
-    new TargetPCAAndSubpolicies(AlwaysTrue, stapl.core.PermitOverrides, subpolicies.subpolicies: _*)
+    new TargetPCAAndSubpolicies(LiteralExpression(true), stapl.core.PermitOverrides, subpolicies.subpolicies: _*)
 
   def DenyOverrides(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies =
-    new TargetPCAAndSubpolicies(AlwaysTrue, stapl.core.DenyOverrides, subpolicies.subpolicies: _*)
+    new TargetPCAAndSubpolicies(LiteralExpression(true), stapl.core.DenyOverrides, subpolicies.subpolicies: _*)
 
   def FirstApplicable(subpolicies: OnlySubpolicies): TargetPCAAndSubpolicies =
-    new TargetPCAAndSubpolicies(AlwaysTrue, stapl.core.FirstApplicable, subpolicies.subpolicies: _*)
+    new TargetPCAAndSubpolicies(LiteralExpression(true), stapl.core.FirstApplicable, subpolicies.subpolicies: _*)
 }
 class OnlySubpolicies(val subpolicies: AbstractPolicy*)
 object to {
@@ -154,7 +154,7 @@ object Policy {
 
 
 object log {
-  def apply(msg: Value) = new LogObligationAction(msg)
+  def apply(msg: Value[String]) = new LogObligationAction(msg)
 }
 object mail {
   def apply(to: String, msg: String) = new MailObligationAction(to, msg)
@@ -163,7 +163,7 @@ object mail {
  * Updating attribute values
  */
 object update {
-  def apply(attribute: Attribute, value: Value) =
+  def apply[T](attribute: Attribute[T], value: Value[T]) =
     new ChangeAttributeObligationAction(attribute, value, Update)
 }
 
@@ -171,6 +171,6 @@ object update {
  * Appending to attribute values
  */
 object append {
-  def apply(attribute: Attribute, value: Value) =
+  def apply[T](attribute: Attribute[T], value: Value[T]) =
     new ChangeAttributeObligationAction(attribute, value, Append)
 }
