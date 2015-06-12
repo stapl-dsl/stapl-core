@@ -41,4 +41,6 @@ object Value {
   }
   
   implicit def any2Value[T](t: T): Value[T] = Value(t)
+  
+  implicit def value2expression(value: Value[Boolean]): Expression = ValueExpression(value)
 }

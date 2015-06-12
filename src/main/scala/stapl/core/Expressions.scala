@@ -34,7 +34,6 @@ abstract class Expression {
 }
 
 object Expression {
-  implicit def value2expression(value: Value[Boolean]): Expression = ValueExpression(value)
   implicit def boolean2expression(value: Boolean): Expression = LiteralExpression(value)
 }
 

@@ -19,3 +19,9 @@ libraryDependencies ++= Seq("junit" % "junit" % "4.11" % "test",
                             "org.clapper" % "grizzled-slf4j_2.11" % "1.0.2",
                             "org.clapper" % "grizzled-scala_2.11" % "1.2",
                             "org.scala-lang.modules" % "scala-swing_2.11" % "1.0.1")
+
+import de.heikoseeberger.sbtheader.license.Apache2_0
+
+headers := Map(
+  "scala" -> Apache2_0("2015", "Jasper Moeys, iMinds-DistriNet, KU Leuven")
+)

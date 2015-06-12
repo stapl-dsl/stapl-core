@@ -14,5 +14,9 @@ trait Instances {
   
   implicit def AbsNumeric[A : Numeric] = new Absable[A, A] { def absoluteValue(in: A) = implicitly[Numeric[A]].abs(in) }
   
-  implicit def ListContains[A] = new Containable[A, List[A], Boolean] { def isContainedIn(l: A, r: List[A]) = r contains l }
+  implicit def ListContains[A] = new Containable[A, List[A]] { def isContainedIn(l: A, r: List[A]) = r contains l }
+  
+  implicit def EqualsAny[A] = new Equals[A, A] { def areEqual(l: A, r: A) = r == l }
+  
+  implicit def CompareOrdering[A : Ordering] = new Comparable[A, A] { def greaterThan(l: A, r: A) = implicitly[Ordering[A]].gt(l, r) }
 }
