@@ -3,27 +3,26 @@ package stapl.core.dsl
 import stapl.core._
 import scala.language.implicitConversions
 
-
+/**
+ * **************************************
+ * The more natural DSL for policies and policy sets
+ *
+ * Examples for policies:
+ *  Policy("policy1") := when ("role" in subject.roles) deny iff (subject.allowed === false)
+ *  Policy("policy2") := deny iff (subject.allowed === false)
+ *  Policy("policy3") := when ("role" in subject.roles) deny
+ *  Policy("policy4") := deny
+ *
+ * Examples for policy sets:
+ *  TODO
+ *
+ * FIXME the "policy" in this line should not be possible:
+ *  Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
+ *  ====== Why not? ====== => because this is a policy and the keyword "permit" should not be in here
+ *
+ * TODO does a rule need a target?
+ */
 trait DSL {
-  /**
-   * **************************************
-   * The more natural DSL for policies and policy sets
-   *
-   * Examples for policies:
-   * 	Policy("policy1") := when ("role" in subject.roles) deny iff (subject.allowed === false)
-   *  Policy("policy2") := deny iff (subject.allowed === false)
-   *  Policy("policy3") := when ("role" in subject.roles) deny
-   *  Policy("policy4") := deny
-   *
-   * Examples for policy sets:
-   * 	TODO
-   *
-   * FIXME the "policy" in this line should not be possible:
-   * 	Policy("view document") := when (action.id === "view" & resource.type_ === "document") permit
-   *  ====== Why not? ====== => because this is a policy and the keyword "permit" should not be in here
-   *
-   * TODO does a rule need a target?
-   */
   class OnlyIdRule(private val id: String) {
   
     def :=(t: EffectConditionAndObligationActions): Rule =

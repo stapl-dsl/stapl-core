@@ -1,17 +1,18 @@
 package stapl.core.typeclasses
 
 trait Instances {
-  implicit object AddDoubles extends Addable[Double, Double, Double] { def add(l: Double, r: Double) = l + r }
+  //implicit object AddDoubles extends Addable[Double, Double, Double] { def add(l: Double, r: Double) = l + r }
+  implicit def AddNumeric[A : Numeric] = new Addable[A, A, A] { def add(l: A, r: A) = implicitly[Numeric[A]].plus(l, r) }
   implicit object AddStrings extends Addable[String, String, String] { def add(l: String, r: String) = l + r }
   implicit def AddList[A] = new Addable[List[A], List[A], List[A]] { def add(l: List[A], r: List[A]) = l ::: r }
   
-  implicit object SubtractDoubles extends Subtractable[Double, Double, Double] { def subtract(l: Double, r: Double) = l - r }
+  implicit def SubtractNumeric[A : Numeric] = new Subtractable[A, A, A] { def subtract(l: A, r: A) = implicitly[Numeric[A]].minus(l, r) }
   
-  implicit object MultiplyDoubles extends Multipliable[Double, Double, Double] { def multiply(l: Double, r: Double) = l * r }
+  implicit def MultiplyNumeric[A : Numeric] = new Multipliable[A, A, A] { def multiply(l: A, r: A) = implicitly[Numeric[A]].times(l, r) }
   
-  implicit object DivideDoubles extends Divisible[Double, Double, Double] { def divide(l: Double, r: Double) = l / r }
+  implicit def DivideFractional[A : Fractional] = new Divisible[A, A, A] { def divide(l: A, r: A) = implicitly[Fractional[A]].div(l, r) }
   
-  implicit object AbsDoubles extends Absable[Double, Double] { def absoluteValue(in: Double) = Math.abs(in) }
+  implicit def AbsNumeric[A : Numeric] = new Absable[A, A] { def absoluteValue(in: A) = implicitly[Numeric[A]].abs(in) }
   
   implicit def ListContains[A] = new Containable[A, List[A], Boolean] { def isContainedIn(l: A, r: List[A]) = r contains l }
 }
