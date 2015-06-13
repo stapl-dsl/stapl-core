@@ -16,13 +16,31 @@
 
 package stapl.core.typeclasses
 
+import org.joda.time.Period
+import org.joda.time.LocalDate
+import org.joda.time.LocalDateTime
+import org.joda.time.LocalTime
+
 trait Instances {
   //implicit object AddDoubles extends Addable[Double, Double, Double] { def add(l: Double, r: Double) = l + r }
   implicit def AddNumeric[A : Numeric] = new Addable[A, A, A] { def add(l: A, r: A) = implicitly[Numeric[A]].plus(l, r) }
   implicit object AddStrings extends Addable[String, String, String] { def add(l: String, r: String) = l + r }
   implicit def AddList[A] = new Addable[List[A], List[A], List[A]] { def add(l: List[A], r: List[A]) = l ::: r }
+  implicit object AddPeriod extends Addable[Period, Period, Period] { def add(l: Period, r: Period) = l plus r }
+  implicit object AddLocalDatePeriod extends Addable[LocalDate, Period, LocalDate] { def add(l: LocalDate, r: Period) = l plus r }
+  implicit object AddLocalDateTimePeriod extends Addable[LocalDateTime, Period, LocalDateTime] { def add(l: LocalDateTime, r: Period) = l plus r }
+  implicit object AddLocalTimePeriod extends Addable[LocalTime, Period, LocalTime] { def add(l: LocalTime, r: Period) = l plus r }
   
   implicit def SubtractNumeric[A : Numeric] = new Subtractable[A, A, A] { def subtract(l: A, r: A) = implicitly[Numeric[A]].minus(l, r) }
+  implicit object SubtractPeriod extends Subtractable[Period, Period, Period] { def subtract(l: Period, r: Period) = l minus r }
+  implicit object SubtractLocalDatePeriod extends Subtractable[LocalDate, Period, LocalDate] { def subtract(l: LocalDate, r: Period) = l minus r }
+  implicit object SubtractLocalDateTimePeriod extends Subtractable[LocalDateTime, Period, LocalDateTime] { def subtract(l: LocalDateTime, r: Period) = l minus r }
+  implicit object SubtractLocalTimePeriod extends Subtractable[LocalTime, Period, LocalTime] { def subtract(l: LocalTime, r: Period) = l minus r }
+  // FIXME conflicting implicits :'(
+  /*implicit object SubtractLocalDate extends Subtractable[LocalDate, LocalDate, Period] { def subtract(l: LocalDate, r: LocalDate) = new Period(l, r) }
+  implicit object SubtractLocalDateTime extends Subtractable[LocalDateTime, LocalDateTime, Period] { def subtract(l: LocalDateTime, r: LocalDateTime) = new Period(l, r) }
+  implicit object SubtractLocalTime extends Subtractable[LocalTime, LocalTime, Period] { def subtract(l: LocalTime, r: LocalTime) = new Period(l, r) }
+  */
   
   implicit def MultiplyNumeric[A : Numeric] = new Multipliable[A, A, A] { def multiply(l: A, r: A) = implicitly[Numeric[A]].times(l, r) }
   

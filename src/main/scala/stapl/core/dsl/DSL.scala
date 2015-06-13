@@ -72,9 +72,7 @@ trait DSL {
       new Obligation(obligationAction, effect)
   }
   
-  object ObligationActionWithOn {
-    implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
-  }
+  implicit def obligationAction2ObligationActionWithOn(oa: ObligationAction): ObligationActionWithOn = new ObligationActionWithOn(oa)
   
   class EffectAndCondition(val effect: Effect, val condition: Expression) {
   

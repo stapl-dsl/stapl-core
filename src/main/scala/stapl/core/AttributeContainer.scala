@@ -105,8 +105,3 @@ case object SUBJECT extends AttributeContainerType
 case object RESOURCE extends AttributeContainerType
 case object ENVIRONMENT extends AttributeContainerType
 case object ACTION extends AttributeContainerType
-
-abstract class Subject extends AttributeContainer(SUBJECT)
-abstract class Resource extends AttributeContainer(RESOURCE)
-abstract class Environment extends AttributeContainer(ENVIRONMENT)
-abstract class Action extends AttributeContainer(ACTION)
