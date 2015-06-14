@@ -20,6 +20,8 @@ import org.joda.time.Period
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalTime
+import org.joda.time.ReadablePartial
+import org.joda.time.base.BaseLocal
 
 trait Instances {
   //implicit object AddDoubles extends Addable[Double, Double, Double] { def add(l: Double, r: Double) = l + r }
@@ -53,4 +55,8 @@ trait Instances {
   implicit def EqualsAny[A] = new Equals[A, A] { def areEqual(l: A, r: A) = r == l }
   
   implicit def CompareOrdering[A : Ordering] = new Comparable[A, A] { def greaterThan(l: A, r: A) = implicitly[Ordering[A]].gt(l, r) }
+  //Provide an Ordering for LocalDate, LocalTime and LocalDateTime
+  implicit def BaseLocalHasOrdering[A <: BaseLocal]: Ordering[A] = new Ordering[A] {
+    def compare(x: A, y: A) = x.compareTo(y)
+  }
 }
