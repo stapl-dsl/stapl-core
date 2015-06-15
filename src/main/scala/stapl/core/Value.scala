@@ -43,7 +43,7 @@ import scala.language.implicitConversions
  * 
  * @tparam T The type of the concrete value this Value represents.
  */
-trait Value[+T] {
+trait Value[T] {
   def getConcreteValue(ctx: EvaluationCtx): T
 }
 
