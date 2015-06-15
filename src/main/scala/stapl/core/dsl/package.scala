@@ -24,6 +24,9 @@ import org.joda.time.LocalDate
 import org.joda.time.LocalTime
 
 package object dsl extends DSL with Instances with Syntax {
+  
+  object any2stringadd // DIE any2stringadd DIE !!!
+  
   /**
    * You might want to manually wrap something in a Value. Use with care.
    */
@@ -49,6 +52,8 @@ package object dsl extends DSL with Instances with Syntax {
   
   def DateTime(year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int, millis: Int) = 
     new LocalDateTime(year, month, day, hours, minutes, seconds, millis)
+  def DateTime(year: Int, month: Int, day: Int, hours: Int, minutes: Int, seconds: Int): LocalDateTime = 
+    DateTime(year, month, day, hours, minutes, seconds, 0)
   def Day(year: Int, month: Int, day: Int) =
     new LocalDate(year, month, day)
   def Time(hours: Int, minutes: Int, seconds: Int, millis: Int) = 

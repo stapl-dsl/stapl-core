@@ -37,7 +37,7 @@ trait Instances {
   implicit object SubtractLocalDatePeriod extends Subtractable[LocalDate, Period, LocalDate] { def subtract(l: LocalDate, r: Period) = l minus r }
   implicit object SubtractLocalDateTimePeriod extends Subtractable[LocalDateTime, Period, LocalDateTime] { def subtract(l: LocalDateTime, r: Period) = l minus r }
   implicit object SubtractLocalTimePeriod extends Subtractable[LocalTime, Period, LocalTime] { def subtract(l: LocalTime, r: Period) = l minus r }
-  // FIXME conflicting implicits :'(
+  // FIXED (I think) conflicting implicits :'(
   implicit object SubtractLocalDate extends Subtractable[LocalDate, LocalDate, Period] { def subtract(l: LocalDate, r: LocalDate) = new Period(l, r) }
   implicit object SubtractLocalDateTime extends Subtractable[LocalDateTime, LocalDateTime, Period] { def subtract(l: LocalDateTime, r: LocalDateTime) = new Period(l, r) }
   implicit object SubtractLocalTime extends Subtractable[LocalTime, LocalTime, Period] { def subtract(l: LocalTime, r: LocalTime) = new Period(l, r) }
