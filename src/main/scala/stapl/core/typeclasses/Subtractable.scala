@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot subtract a ${R} from a ${L}")
 trait Subtractable[L,R,Out] {
   def subtract(l: L, r: R): Out 
 }

@@ -16,6 +16,10 @@
 
 package stapl.core.typeclasses
 
+
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot check for equality between a ${L} and a ${R}")
 trait Equals[L,R] {
   def areEqual(l: L, r: R): Boolean
 }

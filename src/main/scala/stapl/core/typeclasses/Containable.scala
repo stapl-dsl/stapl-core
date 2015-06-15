@@ -16,6 +16,10 @@
 
 package stapl.core.typeclasses
 
+
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot check wether a ${R} contains a ${L}")
 trait Containable[L,R] {
   def isContainedIn(l: L, r: R): Boolean
 }

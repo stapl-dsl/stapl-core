@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot take the absolute value of a ${In}")
 trait Absable[In,Out] {
   def absoluteValue(in: In): Out
 }

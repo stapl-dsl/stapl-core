@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot add a ${L} and a ${R}")
 trait Addable[L,R,Out] {
   def add(l: L, r: R): Out
 }

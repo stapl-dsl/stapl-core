@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot divide a ${L} by a ${R}")
 trait Divisible[L,R,Out] {
   def divide(l: L, r: R): Out
 }

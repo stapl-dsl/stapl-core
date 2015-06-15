@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot compare a ${L} with a ${R}")
 trait Comparable[L,R] {
   def greaterThan(l: L, r: R): Boolean
 }

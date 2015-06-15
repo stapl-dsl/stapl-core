@@ -20,7 +20,6 @@ import org.joda.time.Period
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalTime
-import org.joda.time.ReadablePartial
 import org.joda.time.base.BaseLocal
 
 trait Instances {
@@ -39,10 +38,10 @@ trait Instances {
   implicit object SubtractLocalDateTimePeriod extends Subtractable[LocalDateTime, Period, LocalDateTime] { def subtract(l: LocalDateTime, r: Period) = l minus r }
   implicit object SubtractLocalTimePeriod extends Subtractable[LocalTime, Period, LocalTime] { def subtract(l: LocalTime, r: Period) = l minus r }
   // FIXME conflicting implicits :'(
-  /*implicit object SubtractLocalDate extends Subtractable[LocalDate, LocalDate, Period] { def subtract(l: LocalDate, r: LocalDate) = new Period(l, r) }
+  implicit object SubtractLocalDate extends Subtractable[LocalDate, LocalDate, Period] { def subtract(l: LocalDate, r: LocalDate) = new Period(l, r) }
   implicit object SubtractLocalDateTime extends Subtractable[LocalDateTime, LocalDateTime, Period] { def subtract(l: LocalDateTime, r: LocalDateTime) = new Period(l, r) }
   implicit object SubtractLocalTime extends Subtractable[LocalTime, LocalTime, Period] { def subtract(l: LocalTime, r: LocalTime) = new Period(l, r) }
-  */
+  
   
   implicit def MultiplyNumeric[A : Numeric] = new Multipliable[A, A, A] { def multiply(l: A, r: A) = implicitly[Numeric[A]].times(l, r) }
   

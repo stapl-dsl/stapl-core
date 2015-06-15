@@ -16,6 +16,9 @@
 
 package stapl.core.typeclasses
 
+import scala.annotation.implicitNotFound
+
+@implicitNotFound("Cannot multiply a ${L} with a ${R}")
 trait Multipliable[L,R,Out] {
   def multiply(l: L, r: R): Out
 }
