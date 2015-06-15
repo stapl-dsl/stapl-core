@@ -43,7 +43,7 @@ import scala.language.implicitConversions
  * 
  * @tparam T The type of the concrete value this Value represents.
  */
-trait Value[T] {
+trait Value[+T] {
   def getConcreteValue(ctx: EvaluationCtx): T
 }
 
@@ -53,7 +53,7 @@ object Value {
    */
   def apply[T](something: T) = new Value[T] { 
     def getConcreteValue(ctx: EvaluationCtx): T = something
-    override def toString = something.toString
+    override def toString = s"Value(${something.toString})"
   }
   
   implicit def any2Value[T](t: T): Value[T] = Value(t)
