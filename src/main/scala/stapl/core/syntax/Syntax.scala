@@ -20,6 +20,7 @@ import stapl.core.typeclasses._
 import stapl.core.Value
 import stapl.core.BinaryOp
 import stapl.core.UnaryOp
+import stapl.core.UnaryOp
 
 trait Syntax {
   implicit class Plus[L, R, Out](l: L) {
@@ -94,10 +95,5 @@ trait Syntax {
     def gteq(r: Value[R])(implicit c: Comparable[L, R], e: Equals[L, R]): Value[Boolean] = BinaryOp("gteq",l , r, gteq_function(c,e))
   }
   
-  implicit class Abs[In, Out](in: In) {
-    def abs()(implicit ev: Absable[In, Out]): Value[Out] = UnaryOp("abs", Value(in), ev.absoluteValue _)
-  }
-  implicit class AbsValue[In, Out](in: Value[In]) {
-    def abs()(implicit ev: Absable[In, Out]): Value[Out] = UnaryOp("abs", in, ev.absoluteValue _)
-  }
+  def abs[In, Out](in: Value[In])(implicit ev: Absable[In, Out]): Value[Out] = UnaryOp("abs", in, ev.absoluteValue _)
 }
