@@ -14,9 +14,9 @@ class PolicyParser {
   settings.nowarnings.value = true
   val interpreter = new IMain(settings)
   interpreter.beQuietDuring({
-    interpreter.addImports(
-      "stapl.core.{subject => _, resource => _, action => _, _}",
-      "stapl.core.templates._")
+    interpreter.interpret(
+      "import stapl.core.{subject => _, resource => _, action => _, _}\n" +
+      "import stapl.core.templates._")
   })
   
   /**
@@ -24,22 +24,22 @@ class PolicyParser {
    */
   def addImport(i: String) = {
     interpreter.beQuietDuring({
-      interpreter.addImports(i)
+      interpreter.interpret(s"import $i")
     })
   }
 
   /**
    * Parse the given policy string and return the resulting policy.
    * 
-   * @param		policyString: String
-   * 			The string containing the STAPL policy. This policy should not
-   *    		contain attribute definitions and should just contain the policy
-   *      		specification, not an assignment to a val. 
-   *        	For example: policyString = "Policy(...) := ..."
+   * @param   policyString: String
+   *      The string containing the STAPL policy. This policy should not
+   *        contain attribute definitions and should just contain the policy
+   *          specification, not an assignment to a val. 
+   *          For example: policyString = "Policy(...) := ..."
    * 
-   * @throws 	RuntimeException	
-   * 			When the parser did not success in getting 
-   * 			an abstract policy from the given string.
+   * @throws  RuntimeException  
+   *      When the parser did not success in getting 
+   *      an abstract policy from the given string.
    */
   def parse(policyString: String): AbstractPolicy = {
     val completePolicy = s"val policy = $policyString"
