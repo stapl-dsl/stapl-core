@@ -35,7 +35,6 @@
  */
 package stapl.core
 
-import java.util.Date
 import stapl.core.pdp.EvaluationCtx
 import scala.language.implicitConversions
 

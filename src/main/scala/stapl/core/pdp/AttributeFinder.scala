@@ -55,7 +55,7 @@ sealed class AttributeFinder extends Modules[AttributeFinderModule] {
     @tailrec
     def find(modules: List[AttributeFinderModule]): Option[Any] = modules match {
       case module :: tail => module.find(ctx, attribute) match {
-        case Some(result) => Some(result)
+        case result @ Some(_) => result
         case None => find(tail)
       }
       case Nil => None

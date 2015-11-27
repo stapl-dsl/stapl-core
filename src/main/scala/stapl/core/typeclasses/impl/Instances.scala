@@ -14,13 +14,22 @@
  * limitations under the License.
  */
 
-package stapl.core.typeclasses
+package stapl.core.typeclasses.impl
 
 import org.joda.time.Period
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalTime
 import org.joda.time.base.BaseLocal
+import scala.annotation.implicitNotFound
+import stapl.core.typeclasses.Absable
+import stapl.core.typeclasses.Addable
+import stapl.core.typeclasses.Comparable
+import stapl.core.typeclasses.Containable
+import stapl.core.typeclasses.Divisible
+import stapl.core.typeclasses.Equatable
+import stapl.core.typeclasses.Multipliable
+import stapl.core.typeclasses.Subtractable
 
 trait Instances {
   //implicit object AddDoubles extends Addable[Double, Double, Double] { def add(l: Double, r: Double) = l + r }
@@ -51,7 +60,7 @@ trait Instances {
   
   implicit def ListContains[A] = new Containable[A, List[A]] { def isContainedIn(l: A, r: List[A]) = r contains l }
   
-  implicit def EqualsAny[A] = new Equals[A, A] { def areEqual(l: A, r: A) = r == l }
+  implicit def EqualsAny[A] = new Equatable[A, A] { def areEqual(l: A, r: A) = r == l }
   
   implicit def CompareOrdering[A : Ordering] = new Comparable[A, A] { def greaterThan(l: A, r: A) = implicitly[Ordering[A]].gt(l, r) }
   //Provide an Ordering for LocalDate, LocalTime and LocalDateTime
