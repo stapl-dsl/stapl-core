@@ -54,13 +54,13 @@ trait Syntax {
   
   implicit class ExtCompare[A, L <% Value[A]](l: L) {
     def <[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp("<", l, r, (x: A, y: B) => { !(c.greaterThan(x,y) || e.areEqual(x, y))})
-    @inline def lt[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <(r)
+    @inline def lt[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <(r)
     
     def <=[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp("<=", l, r, (x: A, y: B) => { !c.greaterThan(x,y) })
-    @inline def lteq[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <=(r)
+    @inline def lteq[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <=(r)
     
     def >=[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp(">=", l, r, (x: A, y: B) => { c.greaterThan(x,y) || e.areEqual(x, y) })
-    @inline def gteq[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = >=(r)
+    @inline def gteq[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = >=(r)
   }
   
   def abs[A, Out](in: Value[A])(implicit ev: Absable[A, Out]): Value[Out] = UnaryOp("abs", in, ev.absoluteValue _)
