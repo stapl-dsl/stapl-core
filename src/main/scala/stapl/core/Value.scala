@@ -56,7 +56,10 @@ object Value {
     override def toString = s"Value(${something.toString})"
   }
   
-  implicit def any2Value[T](t: T): Value[T] = Value(t)
+  implicit def any2Value[T](t: T): Value[T] = {
+    assert(!t.isInstanceOf[Value[_]])
+    Value(t)
+  }
   
   implicit def value2expression(value: Value[Boolean]): Expression = ValueExpression(value)
 }

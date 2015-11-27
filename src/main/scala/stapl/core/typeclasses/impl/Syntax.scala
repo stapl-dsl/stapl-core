@@ -23,85 +23,45 @@ import stapl.core.UnaryOp
 import scala.annotation.implicitNotFound
 
 trait Syntax {
-  implicit class Plus[L](l: L) {
-    def +[R, Out](r: Value[R])(implicit ev: Addable[L, R, Out]): Value[Out] = BinaryOp("+", Value(l), r, ev.add _)
-  }
-  implicit class PlusValue[L](l: Value[L]) {
-    def +[R, Out](r: Value[R])(implicit ev: Addable[L, R, Out]): Value[Out] = BinaryOp("+", l, r, ev.add _)
+  implicit class Plus[A, L <% Value[A]](l: L) {
+    def +[B, Out](r: Value[B])(implicit ev: Addable[A, B, Out]): Value[Out] = BinaryOp("+", l, r, ev.add _)
   }
   
-  implicit class Minus[L](l: L) {
-    def -[R, Out](r: Value[R])(implicit ev: Subtractable[L, R, Out]): Value[Out] = BinaryOp("-", Value(l), r, ev.subtract _)
-  }
-  implicit class MinusValue[L](l: Value[L]) {
-    def -[R, Out](r: Value[R])(implicit ev: Subtractable[L, R, Out]): Value[Out] = BinaryOp("-", l, r, ev.subtract _)
+  implicit class Minus[A, L <% Value[A]](l: L) {
+    def -[B, Out](r: Value[B])(implicit ev: Subtractable[A, B, Out]): Value[Out] = BinaryOp("-", l, r, ev.subtract _)
   }
   
-  implicit class Times[L](l: L) {
-    def *[R, Out](r: Value[R])(implicit ev: Multipliable[L, R, Out]): Value[Out] = BinaryOp("*", Value(l), r, ev.multiply _)
-  }
-  implicit class TimesValue[L](l: Value[L]) {
-    def *[R, Out](r: Value[R])(implicit ev: Multipliable[L, R, Out]): Value[Out] = BinaryOp("*", l, r , ev.multiply _)
+  implicit class Times[A, L <% Value[A]](l: L) {
+    def *[B, Out](r: Value[B])(implicit ev: Multipliable[A, B, Out]): Value[Out] = BinaryOp("*", l, r, ev.multiply _)
   }
   
-  implicit class Divide[L](l: L) {
-    def /[R, Out](r: Value[R])(implicit ev: Divisible[L, R, Out]): Value[Out] = BinaryOp("/", Value(l), r, ev.divide _)
-  }
-  implicit class DivideValue[L](l: Value[L]) {
-    def /[R, Out](r: Value[R])(implicit ev: Divisible[L, R, Out]): Value[Out] = BinaryOp("/", l, r, ev.divide _)
+  implicit class Divide[A, L <% Value[A]](l: L) {
+    def /[B, Out](r: Value[B])(implicit ev: Divisible[A, B, Out]): Value[Out] = BinaryOp("/", l, r, ev.divide _)
   }
   
-  implicit class Contains[L](l: L) {
-    def in[R](r: Value[R])(implicit ev: Containable[L, R]): Value[Boolean] = BinaryOp("in", Value(l), r, ev.isContainedIn _)
-  }
-  implicit class ContainsValue[L, R](l: Value[L]) {
-    def in[R](r: Value[R])(implicit ev: Containable[L, R]): Value[Boolean] = BinaryOp("in", l, r, ev.isContainedIn _)
+  implicit class Contains[A, L <% Value[A]](l: L) {
+    def in[B](r: Value[B])(implicit ev: Containable[A, B]): Value[Boolean] = BinaryOp("in", l, r, ev.isContainedIn _)
   }
   
-  implicit class IsEqual[L](l: L) {
-    def ===[R](r: Value[R])(implicit ev: Equatable[L, R]): Value[Boolean] = BinaryOp("===", Value(l), r, ev.areEqual _)
-  }
-  implicit class IsEqualValue[L, R](l: Value[L]) {
-    def ===[R](r: Value[R])(implicit ev: Equatable[L, R]): Value[Boolean] = BinaryOp("===", l, r , ev.areEqual _)
+  implicit class IsEqual[A, L <% Value[A]](l: L) {
+    def ===[B](r: Value[B])(implicit ev: Equatable[A, B]): Value[Boolean] = BinaryOp("===", l, r, ev.areEqual _)
   }
   
-  implicit class IsGreaterThan[L](l: L) {
-    def >[R](r: Value[R])(implicit ev: Comparable[L, R]): Value[Boolean] = BinaryOp(">", Value(l), r, ev.greaterThan _)
-    @inline def gt[R](r: Value[R])(implicit ev: Comparable[L, R]): Value[Boolean] = >(r)
-  }
-  implicit class IsGreaterThanValue[L](l: Value[L]) {
-    def >[R](r: Value[R])(implicit ev: Comparable[L, R]): Value[Boolean] = BinaryOp(">", l, r, ev.greaterThan _)
-    @inline def gt[R](r: Value[R])(implicit ev: Comparable[L, R]): Value[Boolean] = >(r)
+  implicit class IsGreaterThan[A, L <% Value[A]](l: L) {
+    def >[B](r: Value[B])(implicit ev: Comparable[A, B]): Value[Boolean] = BinaryOp(">", l, r, ev.greaterThan _)
+    @inline def gt[B](r: Value[B])(implicit ev: Comparable[A, B]): Value[Boolean] = >(r)
   }
   
-  implicit class ExtCompare[L, R](l: L) {
-    private lazy val lt_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { !(c.greaterThan(x,y) || e.areEqual(x, y))}
-    private lazy val lteq_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { !c.greaterThan(x,y) }
-    private lazy val gteq_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { c.greaterThan(x,y) || e.areEqual(x, y) }
+  implicit class ExtCompare[A, L <% Value[A]](l: L) {
+    def <[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp("<", l, r, (x: A, y: B) => { !(c.greaterThan(x,y) || e.areEqual(x, y))})
+    @inline def lt[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <(r)
     
-    def <(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp("<", Value(l), r, lt_function(c,e))
-    @inline def lt(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = <(r)
+    def <=[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp("<=", l, r, (x: A, y: B) => { !c.greaterThan(x,y) })
+    @inline def lteq[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = <=(r)
     
-    def <=(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp("<=", Value(l), r, lteq_function(c,e))
-    @inline def lteq(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = <=(r)
-    
-    def >=(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp(">=", Value(l), r, gteq_function(c,e))
-    @inline def gteq(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = >=(r)
-  }
-  implicit class ExtCompareValue[L, R](l: Value[L]) {
-    private lazy val lt_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { !(c.greaterThan(x,y) || e.areEqual(x, y))}
-    private lazy val lteq_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { !c.greaterThan(x,y) }
-    private lazy val gteq_function = (c: Comparable[L, R], e: Equatable[L, R]) => (x: L, y: R) => { c.greaterThan(x,y) || e.areEqual(x, y) }
-    
-    def <(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp("<", l, r , lt_function(c,e))
-    @inline def lt(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = <(r)
-    
-    def <=(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp("<=", l, r, lteq_function(c,e))
-    @inline def lteq(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = <=(r)
-    
-    def >=(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = BinaryOp(">=",l , r, gteq_function(c,e))
-    @inline def gteq(r: Value[R])(implicit c: Comparable[L, R], e: Equatable[L, R]): Value[Boolean] = >=(r)
+    def >=[B](r: Value[B])(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = BinaryOp(">=", l, r, (x: A, y: B) => { c.greaterThan(x,y) || e.areEqual(x, y) })
+    @inline def gteq[B, R <% Value[B]](r: R)(implicit c: Comparable[A, B], e: Equatable[A, B]): Value[Boolean] = >=(r)
   }
   
-  def abs[In, Out](in: Value[In])(implicit ev: Absable[In, Out]): Value[Out] = UnaryOp("abs", in, ev.absoluteValue _)
+  def abs[A, Out](in: Value[A])(implicit ev: Absable[A, Out]): Value[Out] = UnaryOp("abs", in, ev.absoluteValue _)
 }
