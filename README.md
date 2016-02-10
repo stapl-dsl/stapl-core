@@ -304,7 +304,7 @@ object ExamplePolicy extends BasicPolicy {
   subject.roles = ListAttribute(String)
 
   val policy = Policy("example policy") := when (action.id === "view") apply PermitOverrides to (
-    Rule("permit physicians") := when ("physician" in subject.roles) permit,
+    Rule("permit physicians") := permit iff ("physician" in subject.roles),
     Rule("default deny") := deny
   )  
 }
