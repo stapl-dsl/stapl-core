@@ -40,6 +40,7 @@ import stapl.core.Attribute
 import stapl.core.SUBJECT
 import stapl.core.RESOURCE
 import stapl.core.ACTION
+import scala.reflect.runtime.universe.typeOf
 
 /**
  * A class used for representing the context of a request.
@@ -65,9 +66,9 @@ class RequestCtx(val subjectId: String, val actionId: String,
   // For now, this works because the repeated definitions are the same, but we should'nt replicate
   // this definition. => idea: create a function to generate the subject, resoruce and action
   // and use this everwhere where you need subject/resource/action.id
-  allAttributes += Attribute[String](SUBJECT, "id") -> subjectId
-  allAttributes += Attribute[String](RESOURCE, "id") -> resourceId
-  allAttributes += Attribute[String](ACTION, "id") -> actionId 
+  allAttributes += Attribute[String](SUBJECT, "id", typeOf[String]) -> subjectId
+  allAttributes += Attribute[String](RESOURCE, "id", typeOf[String]) -> resourceId
+  allAttributes += Attribute[String](ACTION, "id", typeOf[String]) -> actionId 
   
   override def toString(): String = f"${this.subjectId}--${this.actionId}->${this.resourceId} + ${this.allAttributes}" 
       

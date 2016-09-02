@@ -141,6 +141,8 @@ object FullPolicyTest extends Templates {
   
   def main(args: Array[String]) {
     print(ehealthPolicy)
+    println()
+    print(sub.roles)
   }
 
 }

@@ -57,7 +57,7 @@ object Value {
   }
   
   implicit def any2Value[T](t: T): Value[T] = {
-    assert(!t.isInstanceOf[Value[_]])
+    require(!t.isInstanceOf[Value[_]])
     Value(t)
   }
   

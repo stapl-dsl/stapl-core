@@ -39,6 +39,7 @@ import scala.language.experimental.macros
 import scala.collection.mutable.Map
 import scala.collection.mutable.Buffer
 import scala.reflect.macros.blackbox.Context
+import scala.reflect.runtime.universe.{TypeTag, typeTag}
 
 class AttributeDeclarationException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause) 
 
@@ -61,8 +62,8 @@ abstract class AttributeContainer (cType: AttributeContainerType, attributes: Ma
 
   final def this(cType: AttributeContainerType) = this(cType, Map())
   
-  protected final def Attribute[T](name: String): Attribute[T] = {
-    val attribute = new Attribute[T](cType, name)
+  protected final def Attribute[T : TypeTag](name: String): Attribute[T] = {
+    val attribute = new Attribute[T](cType, name, typeTag[T].tpe)
     set(name, attribute)
     attribute
   }

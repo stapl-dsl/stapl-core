@@ -36,7 +36,8 @@
 package stapl.core
 
 import stapl.core.pdp.EvaluationCtx
+import scala.reflect.runtime.universe.Type
 
-case class Attribute[T](val cType: AttributeContainerType, val name: String) extends Value[T] {
+case class Attribute[T](val cType: AttributeContainerType, val name: String, val tpe: Type) extends Value[T] {
   override def getConcreteValue(ctx: EvaluationCtx) = ctx.findAttribute(this)
 }
